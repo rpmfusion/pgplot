@@ -1,0 +1,18 @@
+diff -ur pgplot/makehtml pgplot.p/makehtml
+--- pgplot/makehtml	1997-02-26 22:54:09.000000000 +0100
++++ pgplot.p/makehtml	2005-04-20 16:29:26.000000000 +0200
+@@ -1,4 +1,4 @@
+-#!/usr/local/bin/perl
++#!/usr/bin/perl
+ 
+ $, = ' ';		# set output field separator
+ $\ = "\n";		# set output record separator
+diff -ur pgplot/maketex pgplot.p/maketex
+--- pgplot/maketex	1996-04-16 23:51:24.000000000 +0200
++++ pgplot.p/maketex	2005-04-20 16:29:33.000000000 +0200
+@@ -1,4 +1,4 @@
+-#!/usr/local/bin/perl
++#!/usr/bin/perl
+ 
+ $, = ' ';		# set output field separator
+ $\ = "\n";		# set output record separator

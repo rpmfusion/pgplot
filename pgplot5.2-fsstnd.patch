@@ -1,0 +1,23 @@
+diff -ur pgplot.orig/drivers/xwdriv.c pgplot/drivers/xwdriv.c
+--- pgplot.orig/drivers/xwdriv.c	2000-12-13 02:30:18.000000000 +0100
++++ pgplot/drivers/xwdriv.c	2003-02-28 13:22:32.000000000 +0100
+@@ -3344,6 +3344,7 @@
+     };
+ #else
+     if((exe=find_exe(getenv("PGPLOT_DIR"), PGXWIN_SERVER))==NULL &&
++       (exe=find_exe("/usr/libexec/pgplot", PGXWIN_SERVER))==NULL &&
+        (exe=find_exe(getenv("PATH"), PGXWIN_SERVER))==NULL) {
+       fprintf(stderr,
+          "%s: Couldn't find program \"%s\" in the directory named\n",
+diff -ur pgplot.orig/src/grgfil.f pgplot/src/grgfil.f
+--- pgplot.orig/src/grgfil.f 1995-06-14 03:23:31.000000000 +0200
++++ pgplot/src/grgfil.f    2005-04-20 16:22:43.000000000 +0200
+@@ -26,7 +26,7 @@
+ C  2-Dec-1994 - new routine [TJP].
+ C-----------------------------------------------------------------------
+       CHARACTER*(*) DEFDIR, DEFFNT, DEFRGB
+-      PARAMETER  (DEFDIR='/usr/local/pgplot/')
++      PARAMETER  (DEFDIR='/usr/share/pgplot/')
+       PARAMETER  (DEFFNT='grfont.dat')
+       PARAMETER  (DEFRGB='rgb.txt')
+       CHARACTER*255 FF
