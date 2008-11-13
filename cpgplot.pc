@@ -1,0 +1,11 @@
+prefix=/usr
+exec_prefix=/usr
+libdir=archlibdir
+includedir=/usr/include
+
+Name: cpgplot
+Description: C interface of pgplot
+Version: 5.2.2
+Requires: pgplot
+Libs: -L${libdir} -lcpgplot 
+Cflags: -I${includedir}
