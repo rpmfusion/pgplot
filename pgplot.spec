@@ -3,7 +3,7 @@
 Name: pgplot 
 %define lvmajor 5
 Version: 5.2.2
-Release: 26%{?dist}
+Release: 27%{?dist}
 Summary: Graphic library for making simple scientific graphs
 
 Group: Development/Libraries
@@ -125,12 +125,12 @@ the %{name} Tcl/Tk driver.
 %build
 ./makemake . linux g77_gcc
 # Parallel make not supported
-%{__make} FC=f95 CC=%{__cc} CFLAGS="%{optflags}" FFLAGS="%{optflags}" \
+%{__make} FC="f95" CC="%{__cc}" CFLAGS="%{optflags}" FFLAGS="%{optflags}" \
    NLIBS="-lgfortran -lm -lX11 -lpng"
 
 # Creating dynamic library for C
 %{__make}  %{?_smp_mflags} \
-   FC=f95 CC=%{__cc} CFLAGS="%{optflags}" FFLAGS="%{optflags}" cpg
+   FC=f95 CC="%{__cc}" CFLAGS="%{optflags}" FFLAGS="%{optflags}" cpg
 %{__ar} x libcpgplot.a
 %{__cc} %{optflags} -shared -o libc%{name}.so.%{version} \
     -Wl,-soname,libc%{name}.so.%{lvmajor} \
@@ -222,10 +222,13 @@ pdflatex pgplot-routines.tex
 %{_bindir}/*
 
 %changelog
-* Thu Nov 13 2008 Sergio Pascual <spr@astrax.fis.ucm.es> 5.2.2-26
+* Thu Nov 13 2008 Sergio Pascual <sergio.pasra@gmail.com> 5.2.2-27
+- Patch0 adapted to the buildsystem of fedora 10
+
+* Thu Nov 13 2008 Sergio Pascual <sergio.pasra@gmail.com> 5.2.2-26
 - Provides includes release
 
-* Wed Nov 12 2008 Sergio Pascual <spr@astrax.fis.ucm.es> 5.2.2-25
+* Wed Nov 12 2008 Sergio Pascual <sergio.pasra@gmail.com> 5.2.2-25
 - Fixed non-standard-executable-perm in libcpgplot and libtkpgplot
 - Included version files in one Changelog
 - Parallel make works only with make cpg
@@ -234,14 +237,14 @@ pdflatex pgplot-routines.tex
 - Patched tk driver to have a loadable package
 - Tk driver follows tcl guidelines
 
-* Sun Nov 09 2008 Sergio Pascual <spr@astrax.fis.ucm.es> 5.2.2-24
+* Sun Nov 09 2008 Sergio Pascual <sergio.pasra@gmail.com> 5.2.2-24
 - Using sed to enable the drivers instead of patch
 - Removed docs package
 - Added pkgconfig files
 - Package tcl renamed as tk
 - Create pdf doc from latex routines description
 
-* Wed Nov 05 2008 Sergio Pascual <spr@astrax.fis.ucm.es> 5.2.2-23
+* Wed Nov 05 2008 Sergio Pascual <sergio.pasra@gmail.com> 5.2.2-23
 - Fixing weak symbols in libcpgplot
 - Poststages for libtkpgplot
 - pgplot-tcl-devel requires pgplot-tcl
