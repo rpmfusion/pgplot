@@ -3,7 +3,7 @@
 Name: pgplot 
 %define lvmajor 5
 Version: 5.2.2
-Release: 27%{?dist}
+Release: 28%{?dist}
 Summary: Graphic library for making simple scientific graphs
 
 Group: Development/Libraries
@@ -24,7 +24,7 @@ Patch1: pgplot5.2-makefile.patch
 # make the compiler script accept FFLAGS and FC
 Patch2: pgplot5.2-g77_gcc_conf.patch
 # Needed by the png driver
-Patch3: pgplot5.2-pngdriver2.patch
+Patch3: pgplot5.2-pngdriver.patch
 # Needed to have a loadable tcl package
 Patch4: pgplot5.2-tclpackage.patch
 
@@ -222,6 +222,9 @@ pdflatex pgplot-routines.tex
 %{_bindir}/*
 
 %changelog
+* Tue Nov 18 2008 Sergio Pascual <sergio.pasra@gmail.com> 5.2.2-28
+- Fixing bz #168. There was a typo in patch0
+
 * Thu Nov 13 2008 Sergio Pascual <sergio.pasra@gmail.com> 5.2.2-27
 - Patch0 adapted to the buildsystem of fedora 10
 

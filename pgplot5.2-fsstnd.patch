@@ -5,7 +5,7 @@ diff -ur pgplot/drivers/xwdriv.c pgplot.new/drivers/xwdriv.c
      };
  #else
      if((exe=find_exe(getenv("PGPLOT_DIR"), PGXWIN_SERVER))==NULL &&
-+       (exe=find_exe(getenv("/usr/libexec/pgplot"), PGXWIN_SERVER))==NULL &&
++       (exe=find_exe("/usr/libexec/pgplot", PGXWIN_SERVER))==NULL &&
         (exe=find_exe(getenv("PATH"), PGXWIN_SERVER))==NULL) {
        fprintf(stderr,
  	  "%s: Couldn't find program \"%s\" in the directory named\n",
