@@ -3,7 +3,7 @@
 Name: pgplot 
 %define lvmajor 5
 Version: 5.2.2
-Release: 26%{?dist}
+Release: 27%{?dist}
 Summary: Graphic library for making simple scientific graphs
 
 Group: Development/Libraries
@@ -31,7 +31,7 @@ Patch4: pgplot5.2-tclpackage.patch
 Buildroot: %(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
 
 BuildRequires: libpng-devel tk-devel libX11-devel gcc-gfortran
-BuildRequires: perl texlive-latex glibc-common
+BuildRequires: perl glibc-common
 
 Requires(post): /sbin/ldconfig
 Requires(postun): /sbin/ldconfig
@@ -155,7 +155,6 @@ done
 
 %{__make} %{?_smp_mflags} pgplot-routines.tex
 %{__make} %{?_smp_mflags} pgplot.html
-pdflatex pgplot-routines.tex
 
 %install
 %{__rm} -rf %{buildroot}
@@ -196,7 +195,7 @@ pdflatex pgplot-routines.tex
 
 %files devel
 %defattr (-,root,root,-)
-%doc aaaread.me pgplot-routines.pdf pgplot.html copyright.notice
+%doc aaaread.me pgplot-routines.tex pgplot.html copyright.notice
 %{_libdir}/lib%{name}.so
 %{_libdir}/libc%{name}.so
 %{_includedir}/cpgplot.h
@@ -222,6 +221,9 @@ pdflatex pgplot-routines.tex
 %{_bindir}/*
 
 %changelog
+* Sat Dec 06 2008 Sergio Pascual <sergio.pasra@gmail.com> 5.2.2-27
+- Fixing bz #228. Multilib conflict produced by pgplot-routines.pdf
+
 * Thu Nov 13 2008 Sergio Pascual <spr@astrax.fis.ucm.es> 5.2.2-26
 - Provides includes release
 
