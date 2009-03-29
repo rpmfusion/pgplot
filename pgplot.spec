@@ -3,7 +3,7 @@
 Name: pgplot 
 %define lvmajor 5
 Version: 5.2.2
-Release: 29%{?dist}
+Release: 30%{?dist}
 Summary: Graphic library for making simple scientific graphs
 
 Group: Development/Libraries
@@ -221,6 +221,9 @@ done
 %{_bindir}/*
 
 %changelog
+* Sun Mar 29 2009 Thorsten Leemhuis <fedora [AT] leemhuis [DOT] info> - 5.2.2-30
+- rebuild for new F11 features
+
 * Sat Dec 06 2008 Sergio Pascual <sergio.pasra@gmail.com> 5.2.2-29
 - Fixing bz #228. Multilib conflict produced by pgplot-routines.pdf
 
