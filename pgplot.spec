@@ -3,7 +3,7 @@
 Name: pgplot 
 %define lvmajor 5
 Version: 5.2.2
-Release: 30%{?dist}
+Release: 31%{?dist}
 Summary: Graphic library for making simple scientific graphs
 
 Group: Development/Libraries
@@ -99,18 +99,19 @@ the %{name} Tcl/Tk driver.
 %{__cp} %{SOURCE4} pkgIndex.tcl
 
 # Enabling the following drivers:
-# PNG, PS, PPM, TCL/TK and X
+# PNG, PS, TCL/TK and X
 %{__sed} \
 -e 's/! PNDRIV/  PNDRIV/g' \
 -e 's/! PSDRIV/  PSDRIV/g' \
--e 's/! PPDRIV/  PPDRIV/g' \
 -e 's/! XWDRIV/  XWDRIV/g' \
 -e 's/! TKDRIV/  TKDRIV/g' -i drivers.list
 
-# This version of fedora includes gcc 4.3 
-# that can compile the GIF driver
+# gcc >= 4.3 required to compile the following drivers:
+# GIF and PPM
 %if 0%{?fedora} >= 9
-%{__sed} -e 's/! GIDRIV/  GIDRIV/g' -i drivers.list
+%{__sed} \
+-e 's/! PPDRIV/  PPDRIV/g' \
+-e 's/! GIDRIV/  GIDRIV/g' -i drivers.list
 %endif
 
 # Creating pkgconfig files from templates
@@ -221,6 +222,9 @@ done
 %{_bindir}/*
 
 %changelog
+* Sun May 03 2009 Sergio Pascual <sergio.pasra@gmail.com> - 5.2.2-31
+- PPM doesn't work in EL, with gcc < 4.3
+
 * Sun Mar 29 2009 Thorsten Leemhuis <fedora [AT] leemhuis [DOT] info> - 5.2.2-30
 - rebuild for new F11 features
 
