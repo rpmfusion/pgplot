@@ -1,9 +1,9 @@
-%{!?tcl_version: %define tcl_version %(echo 'puts $tcl_version' | tclsh)}
-%{!?tcl_sitearch: %define tcl_sitearch %{_libdir}/tcl%{tcl_version}}
+%{!?tcl_version: %global tcl_version %(echo 'puts $tcl_version' | tclsh)}
+%{!?tcl_sitearch: %global tcl_sitearch %{_libdir}/tcl%{tcl_version}}
 Name: pgplot 
 %define lvmajor 5
 Version: 5.2.2
-Release: 31%{?dist}
+Release: 31%{?dist}.1
 Summary: Graphic library for making simple scientific graphs
 
 Group: Development/Libraries
@@ -66,7 +66,6 @@ device-independent graphics package for making simple scientific graphs.
 Summary: Tcl/Tk driver for %{name}
 Group: Development/Libraries
 Requires: %{name} = %{version}-%{release}
-Requires: tcl(abi) = 8.5 
 Provides: tk-%{name} = %{version}-%{release}
 
 %description -n tcl-%{name}
@@ -222,6 +221,9 @@ done
 %{_bindir}/*
 
 %changelog
+* Mon May 18 2009 Sergio Pascual <sergio.pasra@gmail.com> - 5.2.2-31.1
+- Removing tcl abi version
+
 * Sun May 03 2009 Sergio Pascual <sergio.pasra@gmail.com> - 5.2.2-31
 - PPM doesn't work in EL, with gcc < 4.3
 
