@@ -3,7 +3,7 @@
 Name: pgplot 
 %define lvmajor 5
 Version: 5.2.2
-Release: 31%{?dist}
+Release: 32%{?dist}
 Summary: Graphic library for making simple scientific graphs
 
 Group: Development/Libraries
@@ -222,6 +222,9 @@ done
 %{_bindir}/*
 
 %changelog
+* Thu Feb 09 2012 Nicolas Chauvet <kwizart@gmail.com> - 5.2.2-32
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_17_Mass_Rebuild
+
 * Sun May 03 2009 Sergio Pascual <sergio.pasra@gmail.com> - 5.2.2-31
 - PPM doesn't work in EL, with gcc < 4.3
 
