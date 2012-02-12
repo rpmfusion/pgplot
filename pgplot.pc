@@ -6,5 +6,5 @@ includedir=/usr/include
 Name: pgplot
 Description: Graphic library for making simple scientific graphs
 Version: 5.2.2
-Libs: -L${libdir} -lpgplot -lgfortran -lm -lX11 -lpng
+Libs: -L${libdir} -lpgplot -lgfortran -lm -lX11
 #Cflags: -I${includedir}

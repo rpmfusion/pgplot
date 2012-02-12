@@ -3,7 +3,7 @@
 Name: pgplot 
 %define lvmajor 5
 Version: 5.2.2
-Release: 32%{?dist}
+Release: 33%{?dist}
 Summary: Graphic library for making simple scientific graphs
 
 Group: Development/Libraries
@@ -15,6 +15,7 @@ Source1: pgplot.pc
 Source2: cpgplot.pc
 Source3: tk-pgplot.pc
 Source4: pgplot-pkgIndex.tcl
+Source5: README.fedora
 
 # Make pgplot find files in standard locations such as
 # /usr/libexec/pgplot and /usr/share/pgplot
@@ -23,15 +24,13 @@ Patch0: pgplot5.2-fsstnd.patch
 Patch1: pgplot5.2-makefile.patch
 # make the compiler script accept FFLAGS and FC
 Patch2: pgplot5.2-g77_gcc_conf.patch
-# Needed by the png driver
+# Needed by the (disabled) png driver
 Patch3: pgplot5.2-pngdriver.patch
 # Needed to have a loadable tcl package
 Patch4: pgplot5.2-tclpackage.patch
 
-Buildroot: %(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
-
-BuildRequires: libpng-devel tk-devel libX11-devel gcc-gfortran
-BuildRequires: perl glibc-common
+BuildRequires: tk-devel libX11-devel gcc-gfortran
+BuildRequires: perl
 
 Requires(post): /sbin/ldconfig
 Requires(postun): /sbin/ldconfig
@@ -48,7 +47,7 @@ the appropriate device at run time.
 Summary: Libraries, includes, etc. used to develop an application with %{name}
 Group: Development/Libraries
 Requires: %{name} = %{version}-%{release}
-Requires: libX11-devel libpng-devel pkgconfig
+Requires: libX11-devel pkgconfig
 
 %description devel
 These are the header files and static libraries needed to develop a %{name} 
@@ -90,18 +89,19 @@ the %{name} Tcl/Tk driver.
 %patch0 -p1
 %patch1 -p1
 %patch2 -p1
-%patch3 -p1
+# PNG disabled
+#%patch3 -p1
 %patch4 -p1
 
-%{__cp} %{SOURCE1} .
-%{__cp} %{SOURCE2} .
-%{__cp} %{SOURCE3} .
-%{__cp} %{SOURCE4} pkgIndex.tcl
+cp %{SOURCE1} .
+cp %{SOURCE2} .
+cp %{SOURCE3} .
+cp %{SOURCE4} pkgIndex.tcl
+cp %{SOURCE5} .
 
 # Enabling the following drivers:
-# PNG, PS, TCL/TK and X
+# PS, TCL/TK and X
 %{__sed} \
--e 's/! PNDRIV/  PNDRIV/g' \
 -e 's/! PSDRIV/  PSDRIV/g' \
 -e 's/! XWDRIV/  XWDRIV/g' \
 -e 's/! TKDRIV/  TKDRIV/g' -i drivers.list
@@ -127,7 +127,7 @@ the %{name} Tcl/Tk driver.
 ./makemake . linux g77_gcc
 # Parallel make not supported
 %{__make} FC="f95" CC="%{__cc}" CFLAGS="%{optflags}" FFLAGS="%{optflags}" \
-   NLIBS="-lgfortran -lm -lX11 -lpng"
+   NLIBS="-lgfortran -lm -lX11 -lz"
 
 # Creating dynamic library for C
 %{__make}  %{?_smp_mflags} \
@@ -135,7 +135,7 @@ the %{name} Tcl/Tk driver.
 %{__ar} x libcpgplot.a
 %{__cc} %{optflags} -shared -o libc%{name}.so.%{version} \
     -Wl,-soname,libc%{name}.so.%{lvmajor} \
-    cpg*.o -L . -l%{name} -lgfortran -lm -lX11 -lpng
+    cpg*.o -L . -l%{name} -lgfortran -lm -lX11 -lz
 
 # Creating dynamic library for TK
 %{__ar} x libtkpgplot.a
@@ -175,9 +175,6 @@ done
 %{__install} -p -m 644 *.pc %{buildroot}/%{_libdir}/pkgconfig
 %{__install} -p -m 644 pkgIndex.tcl %{buildroot}/%{tcl_sitearch}/%{name}
 
-%clean
-%{__rm} -rf %{buildroot}
-
 %post -p /sbin/ldconfig
 
 %postun -p /sbin/ldconfig
@@ -187,15 +184,13 @@ done
 %postun -n tcl-%{name} -p /sbin/ldconfig
 
 %files
-%defattr(-,root,root,-)
-%doc copyright.notice ChangeLog
+%doc copyright.notice ChangeLog README.fedora
 %{_libdir}/lib%{name}.so.*
 %{_libdir}/libc%{name}.so.*
 %{_datadir}/%{name}
 %{_libexecdir}/%{name}
 
 %files devel
-%defattr (-,root,root,-)
 %doc aaaread.me pgplot-routines.tex pgplot.html copyright.notice
 %{_libdir}/lib%{name}.so
 %{_libdir}/libc%{name}.so
@@ -204,24 +199,25 @@ done
 %{_libdir}/pkgconfig/cpgplot.pc
 
 %files -n tcl-%{name}
-%defattr (-,root,root,-)
 %doc copyright.notice
 %{_libdir}/libtk%{name}.so.*
 %{tcl_sitearch}/%{name}
 
 %files -n tcl-%{name}-devel
-%defattr (-,root,root,-)
 %doc copyright.notice
 %{_libdir}/libtk%{name}.so
 %{_includedir}/tkpgplot.h
 %{_libdir}/pkgconfig/tk-pgplot.pc
 
 %files demos
-%defattr (-,root,root,-)
 %doc copyright.notice
 %{_bindir}/*
 
 %changelog
+* Sun Feb 12 2012 Sergio Pascual <sergio.pasra@gmail.com> - 5.2.2-33
+- Disabled png support
+- Added README.fedora listing the enabled drivers
+
 * Thu Feb 09 2012 Nicolas Chauvet <kwizart@gmail.com> - 5.2.2-32
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_17_Mass_Rebuild
 
