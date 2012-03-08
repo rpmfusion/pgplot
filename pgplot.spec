@@ -3,7 +3,7 @@
 Name: pgplot 
 %define lvmajor 5
 Version: 5.2.2
-Release: 33%{?dist}
+Release: 34%{?dist}
 Summary: Graphic library for making simple scientific graphs
 
 Group: Development/Libraries
@@ -214,6 +214,9 @@ done
 %{_bindir}/*
 
 %changelog
+* Thu Mar 08 2012 Sergio Pascual <sergio.pasra@gmail.com> - 5.2.2-34
+- EVR bump for rebuild
+
 * Sun Feb 12 2012 Sergio Pascual <sergio.pasra@gmail.com> - 5.2.2-33
 - Disabled png support
 - Added README.fedora listing the enabled drivers
