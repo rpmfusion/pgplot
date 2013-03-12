@@ -3,7 +3,7 @@
 Name: pgplot 
 %define lvmajor 5
 Version: 5.2.2
-Release: 34%{?dist}
+Release: 35%{?dist}
 Summary: Graphic library for making simple scientific graphs
 
 Group: Development/Libraries
@@ -214,6 +214,9 @@ done
 %{_bindir}/*
 
 %changelog
+* Tue Mar 12 2013 Nicolas Chauvet <kwizart@gmail.com> - 5.2.2-35
+- https://fedoraproject.org/wiki/Fedora_19_Mass_Rebuild
+
 * Thu Mar 08 2012 Sergio Pascual <sergio.pasra@gmail.com> - 5.2.2-34
 - EVR bump for rebuild
 
