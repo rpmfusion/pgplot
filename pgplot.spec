@@ -3,7 +3,7 @@
 Name: pgplot 
 %define lvmajor 5
 Version: 5.2.2
-Release: 34%{?dist}
+Release: 34%{?dist}.1
 Summary: Graphic library for making simple scientific graphs
 
 Group: Development/Libraries
@@ -24,12 +24,12 @@ Patch0: pgplot5.2-fsstnd.patch
 Patch1: pgplot5.2-makefile.patch
 # make the compiler script accept FFLAGS and FC
 Patch2: pgplot5.2-g77_gcc_conf.patch
-# Needed by the (disabled) png driver
+# Needed by the png driver
 Patch3: pgplot5.2-pngdriver.patch
 # Needed to have a loadable tcl package
 Patch4: pgplot5.2-tclpackage.patch
 
-BuildRequires: tk-devel libX11-devel gcc-gfortran
+BuildRequires: tk-devel libX11-devel gcc-gfortran libpng-devel
 BuildRequires: perl
 
 Requires(post): /sbin/ldconfig
@@ -89,8 +89,7 @@ the %{name} Tcl/Tk driver.
 %patch0 -p1
 %patch1 -p1
 %patch2 -p1
-# PNG disabled
-#%patch3 -p1
+%patch3 -p1
 %patch4 -p1
 
 cp %{SOURCE1} .
@@ -100,8 +99,9 @@ cp %{SOURCE4} pkgIndex.tcl
 cp %{SOURCE5} .
 
 # Enabling the following drivers:
-# PS, TCL/TK and X
+# PNG PS, TCL/TK and X
 %{__sed} \
+-e 's/! PNDRIV/  PNDRIV/g' \
 -e 's/! PSDRIV/  PSDRIV/g' \
 -e 's/! XWDRIV/  XWDRIV/g' \
 -e 's/! TKDRIV/  TKDRIV/g' -i drivers.list
@@ -214,6 +214,9 @@ done
 %{_bindir}/*
 
 %changelog
+* Thu May 21 2013 Sergio Pascual <sergio.pasra@gmail.com> - 5.2.2-34.1
+- Readded PNG driver, it works in EPEL6
+
 * Thu Mar 08 2012 Sergio Pascual <sergio.pasra@gmail.com> - 5.2.2-34
 - EVR bump for rebuild
 
