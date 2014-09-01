@@ -3,7 +3,7 @@
 Name: pgplot 
 %define lvmajor 5
 Version: 5.2.2
-Release: 35%{?dist}
+Release: 36%{?dist}
 Summary: Graphic library for making simple scientific graphs
 
 Group: Development/Libraries
@@ -28,6 +28,9 @@ Patch2: pgplot5.2-g77_gcc_conf.patch
 Patch3: pgplot5.2-pngdriver.patch
 # Needed to have a loadable tcl package
 Patch4: pgplot5.2-tclpackage.patch
+# Fix format error 
+Patch5: pgplot5.2-formaterror.patch
+Patch6: pgplot5.2-tcl86.patch
 
 BuildRequires: tk-devel libX11-devel gcc-gfortran
 BuildRequires: perl
@@ -92,6 +95,8 @@ the %{name} Tcl/Tk driver.
 # PNG disabled
 #%patch3 -p1
 %patch4 -p1
+%patch5 -p1
+%patch6 -p1
 
 cp %{SOURCE1} .
 cp %{SOURCE2} .
@@ -214,6 +219,10 @@ done
 %{_bindir}/*
 
 %changelog
+* Mon Sep 01 2014 Sergio Pascual <sergio.pasra@gmail.com> - 5.2.2-36
+- Fix wrong dates in changelog
+- Fix compilation errors
+
 * Tue Mar 12 2013 Nicolas Chauvet <kwizart@gmail.com> - 5.2.2-35
 - https://fedoraproject.org/wiki/Fedora_19_Mass_Rebuild
 
@@ -318,7 +327,7 @@ done
 - Minor fixes.
 - Excluded static libraries.
 
-* Tue Nov 28 2005 Sergio Pascual <spr@astrax.fis.ucm.es> 5.2.2-8
+* Mon Nov 28 2005 Sergio Pascual <spr@astrax.fis.ucm.es> 5.2.2-8
 - Adding soname to the shared libs.
 - Minor fixes.
 
@@ -334,7 +343,7 @@ done
 * Tue Feb 25 2003 Sergio Pascual <spr@astrax.fis.ucm.es> 5.2.2-4
 - Added demos.
 
-* Thu Feb 12 2003 Sergio Pascual <spr@astrax.fis.ucm.es> 5.2.2-3
+* Wed Feb 12 2003 Sergio Pascual <spr@astrax.fis.ucm.es> 5.2.2-3
 - Splited devel part.
 
 * Tue Feb 11 2003 Nicolas Cardiel <ncl@astrax.fis.ucm.es> 5.2.2-2

@@ -1,0 +1,13 @@
+diff -ur pgplot/drivers/xtk/pgtkdemo.c pgplot.tcl86/drivers/xtk/pgtkdemo.c
+--- pgplot/drivers/xtk/pgtkdemo.c	1998-06-06 02:21:36.000000000 +0200
++++ pgplot.tcl86/drivers/xtk/pgtkdemo.c	2014-09-01 19:54:22.629584363 +0200
+@@ -195,7 +195,7 @@
+  * script file.
+  */
+   if(argc < 2 || *argv[1] == '-' || !valid_demo_script(argv[1])) {
+-    fprintf(stderr, usage);
++    fprintf(stderr, "%s", usage);
+     return 1;
+   };
+ /*
+
