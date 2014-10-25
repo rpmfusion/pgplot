@@ -3,7 +3,7 @@
 Name: pgplot 
 %define lvmajor 5
 Version: 5.2.2
-Release: 36%{?dist}
+Release: 37%{?dist}
 Summary: Graphic library for making simple scientific graphs
 
 Group: Development/Libraries
@@ -219,6 +219,9 @@ done
 %{_bindir}/*
 
 %changelog
+* Sat Oct 25 2014 Sérgio Basto <sergio@serjux.com> - 5.2.2-37
+- Rebuild for new tcl-8.6
+
 * Mon Sep 01 2014 Sergio Pascual <sergio.pasra@gmail.com> - 5.2.2-36
 - Fix wrong dates in changelog
 - Fix compilation errors
