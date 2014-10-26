@@ -3,7 +3,7 @@
 Name: pgplot 
 %define lvmajor 5
 Version: 5.2.2
-Release: 37%{?dist}
+Release: 38%{?dist}
 Summary: Graphic library for making simple scientific graphs
 
 Group: Development/Libraries
@@ -68,7 +68,7 @@ device-independent graphics package for making simple scientific graphs.
 Summary: Tcl/Tk driver for %{name}
 Group: Development/Libraries
 Requires: %{name} = %{version}-%{release}
-Requires: tcl(abi) = 8.5 
+Requires: tcl(abi) = 8.6 
 Provides: tk-%{name} = %{version}-%{release}
 
 %description -n tcl-%{name}
@@ -219,6 +219,9 @@ done
 %{_bindir}/*
 
 %changelog
+* Sun Oct 26 2014 Sergio Pascual <sergio.pasra@gmail.com> - 5.2.2-38
+- Update tcl abi to 8.6
+
 * Sat Oct 25 2014 Sérgio Basto <sergio@serjux.com> - 5.2.2-37
 - Rebuild for new tcl-8.6
 
