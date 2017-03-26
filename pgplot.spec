@@ -3,7 +3,7 @@
 Name: pgplot 
 %define lvmajor 5
 Version: 5.2.2
-Release: 38%{?dist}
+Release: 39%{?dist}
 Summary: Graphic library for making simple scientific graphs
 
 Group: Development/Libraries
@@ -219,6 +219,9 @@ done
 %{_bindir}/*
 
 %changelog
+* Sun Mar 26 2017 RPM Fusion Release Engineering <kwizart@rpmfusion.org> - 5.2.2-39
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_26_Mass_Rebuild
+
 * Sun Oct 26 2014 Sergio Pascual <sergio.pasra@gmail.com> - 5.2.2-38
 - Update tcl abi to 8.6
 
