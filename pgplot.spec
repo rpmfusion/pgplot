@@ -3,7 +3,7 @@
 Name: pgplot 
 %define lvmajor 5
 Version: 5.2.2
-Release: 40%{?dist}
+Release: 41%{?dist}
 Summary: Graphic library for making simple scientific graphs
 
 Group: Development/Libraries
@@ -219,6 +219,9 @@ done
 %{_bindir}/*
 
 %changelog
+* Sun Feb 04 2018 Sérgio Basto <sergio@serjux.com> - 5.2.2-41
+- Rebuild (gfortran-8.0.1)
+
 * Thu Aug 31 2017 RPM Fusion Release Engineering <kwizart@rpmfusion.org> - 5.2.2-40
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_27_Mass_Rebuild
 
