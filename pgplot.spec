@@ -3,10 +3,9 @@
 Name: pgplot 
 %define lvmajor 5
 Version: 5.2.2
-Release: 46%{?dist}
+Release: 47%{?dist}
 Summary: Graphic library for making simple scientific graphs
 
-Group: Development/Libraries
 License: freely available for non-commercial use
 
 URL: http://www.astro.caltech.edu/~tjp/pgplot
@@ -32,7 +31,9 @@ Patch4: pgplot5.2-tclpackage.patch
 Patch5: pgplot5.2-formaterror.patch
 Patch6: pgplot5.2-tcl86.patch
 
-BuildRequires: tk-devel libX11-devel gcc-gfortran
+BuildRequires: tk-devel
+BuildRequires: libX11-devel
+BuildRequires: gcc-gfortran
 BuildRequires: perl
 
 Requires(post): /sbin/ldconfig
@@ -48,9 +49,8 @@ the appropriate device at run time.
 
 %package devel
 Summary: Libraries, includes, etc. used to develop an application with %{name}
-Group: Development/Libraries
-Requires: %{name} = %{version}-%{release}
-Requires: libX11-devel pkgconfig
+Requires: %{name}%{?_isa} = %{version}-%{release}
+Requires: libX11-devel
 
 %description devel
 These are the header files and static libraries needed to develop a %{name} 
@@ -58,16 +58,14 @@ application.
 
 %package demos
 Summary: Demo applications of %{name}
-Group: Development/Libraries
-Requires: %{name} = %{version}-%{release}
+Requires: %{name}%{?_isa} = %{version}-%{release}
 %description demos
 Demonstration applications for PGPLOT, a FORTRAN-callable,
 device-independent graphics package for making simple scientific graphs.
 
 %package -n tcl-%{name}
 Summary: Tcl/Tk driver for %{name}
-Group: Development/Libraries
-Requires: %{name} = %{version}-%{release}
+Requires: %{name}%{?_isa} = %{version}-%{release}
 Requires: tcl(abi) = 8.6 
 Provides: tk-%{name} = %{version}-%{release}
 
@@ -76,9 +74,8 @@ Tcl/Tk driver for %{name}
 
 %package -n tcl-%{name}-devel
 Summary: Tcl/Tk driver for %{name} devel files 
-Group: Development/Libraries
-Requires: tcl-%{name} = %{version}-%{release}
-Requires: %{name}-devel = %{version}-%{release}
+Requires: tcl-%{name}%{?_isa} = %{version}-%{release}
+Requires: %{name}-devel%{?_isa} = %{version}-%{release}
 Requires: tk-devel
 Provides: tk-%{name}-devel = %{version}-%{release}
 
@@ -109,15 +106,9 @@ cp %{SOURCE5} .
 %{__sed} \
 -e 's/! PSDRIV/  PSDRIV/g' \
 -e 's/! XWDRIV/  XWDRIV/g' \
--e 's/! TKDRIV/  TKDRIV/g' -i drivers.list
-
-# gcc >= 4.3 required to compile the following drivers:
-# GIF and PPM
-%if 0%{?fedora} >= 9
-%{__sed} \
+-e 's/! TKDRIV/  TKDRIV/g' \
 -e 's/! PPDRIV/  PPDRIV/g' \
 -e 's/! GIDRIV/  GIDRIV/g' -i drivers.list
-%endif
 
 # Creating pkgconfig files from templates
 %{__sed} -e 's|archlibdir|%{_libdir}|g' -i pgplot.pc
@@ -135,7 +126,7 @@ cp %{SOURCE5} .
    NLIBS="-lgfortran -lm -lX11 -lz"
 
 # Creating dynamic library for C
-%{__make}  %{?_smp_mflags} \
+%{make_build} \
    FC=f95 CC="%{__cc}" CFLAGS="%{optflags}" FFLAGS="%{optflags}" cpg
 %{__ar} x libcpgplot.a
 %{__cc} %{optflags} -shared -o libc%{name}.so.%{version} \
@@ -159,11 +150,10 @@ done
 %{__ln_s} libtk%{name}.so.%{version} libtk%{name}.so.%{lvmajor}
 %{__ln_s} libtk%{name}.so.%{version} libtk%{name}.so
 
-%{__make} %{?_smp_mflags} pgplot-routines.tex
-%{__make} %{?_smp_mflags} pgplot.html
+%{make_build} pgplot-routines.tex
+%{make_build} pgplot.html
 
 %install
-%{__rm} -rf %{buildroot}
 %{__mkdir_p} %{buildroot}/%{_bindir}
 %{__mkdir_p} %{buildroot}/%{_libdir}/pkgconfig
 %{__mkdir_p} %{buildroot}/%{_includedir}
@@ -189,14 +179,16 @@ done
 %postun -n tcl-%{name} -p /sbin/ldconfig
 
 %files
-%doc copyright.notice ChangeLog README.fedora
+%doc ChangeLog README.fedora
+%license  copyright.notice
 %{_libdir}/lib%{name}.so.*
 %{_libdir}/libc%{name}.so.*
 %{_datadir}/%{name}
 %{_libexecdir}/%{name}
 
 %files devel
-%doc aaaread.me pgplot-routines.tex pgplot.html copyright.notice
+%doc aaaread.me pgplot-routines.tex pgplot.html
+%license copyright.notice
 %{_libdir}/lib%{name}.so
 %{_libdir}/libc%{name}.so
 %{_includedir}/cpgplot.h
@@ -204,21 +196,24 @@ done
 %{_libdir}/pkgconfig/cpgplot.pc
 
 %files -n tcl-%{name}
-%doc copyright.notice
+%license copyright.notice
 %{_libdir}/libtk%{name}.so.*
 %{tcl_sitearch}/%{name}
 
 %files -n tcl-%{name}-devel
-%doc copyright.notice
+%license copyright.notice
 %{_libdir}/libtk%{name}.so
 %{_includedir}/tkpgplot.h
 %{_libdir}/pkgconfig/tk-pgplot.pc
 
 %files demos
-%doc copyright.notice
+%license copyright.notice
 %{_bindir}/*
 
 %changelog
+* Sun Jan 12 2020 Leigh Scott <leigh123linux@gmail.com> - 5.2.2-47
+- Spec file clean up
+
 * Sat Aug 10 2019 RPM Fusion Release Engineering <leigh123linux@gmail.com> - 5.2.2-46
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_31_Mass_Rebuild
 
