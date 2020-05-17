@@ -3,7 +3,7 @@
 Name: pgplot 
 %define lvmajor 5
 Version: 5.2.2
-Release: 48%{?dist}
+Release: 49%{?dist}
 Summary: Graphic library for making simple scientific graphs
 
 License: freely available for non-commercial use
@@ -122,12 +122,12 @@ cp %{SOURCE5} .
 %build
 ./makemake . linux g77_gcc
 # Parallel make not supported
-%{__make} FC="f95" CC="%{__cc}" CFLAGS="%{optflags}" FFLAGS="%{optflags}" \
+%{__make} FC="f95" CC="%{__cc}" CFLAGS="%{optflags}" FFLAGS="%{optflags} -std=legacy" \
    NLIBS="-lgfortran -lm -lX11 -lz"
 
 # Creating dynamic library for C
 %{make_build} \
-   FC=f95 CC="%{__cc}" CFLAGS="%{optflags}" FFLAGS="%{optflags}" cpg
+   FC=f95 CC="%{__cc}" CFLAGS="%{optflags}" FFLAGS="%{optflags} -std=legacy" cpg
 %{__ar} x libcpgplot.a
 %{__cc} %{optflags} -shared -o libc%{name}.so.%{version} \
     -Wl,-soname,libc%{name}.so.%{lvmajor} \
@@ -211,6 +211,9 @@ done
 %{_bindir}/*
 
 %changelog
+* Sun May 17 2020 Leigh Scott <leigh123linux@gmail.com> - 5.2.2-49
+- Fix FTBFS
+
 * Wed Feb 05 2020 RPM Fusion Release Engineering <leigh123linux@gmail.com> - 5.2.2-48
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_32_Mass_Rebuild
 
