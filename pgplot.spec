@@ -3,7 +3,7 @@
 Name: pgplot 
 %define lvmajor 5
 Version: 5.2.2
-Release: 52%{?dist}
+Release: 53%{?dist}
 Summary: Graphic library for making simple scientific graphs
 
 License: freely available for non-commercial use
