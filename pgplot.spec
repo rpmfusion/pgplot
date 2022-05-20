@@ -15,6 +15,7 @@ Source2: cpgplot.pc
 Source3: tk-pgplot.pc
 Source4: pgplot-pkgIndex.tcl
 Source5: README.fedora
+Source6: motif-pgplot.pc
 
 # Make pgplot find files in standard locations such as
 # /usr/libexec/pgplot and /usr/share/pgplot
@@ -35,6 +36,7 @@ BuildRequires: tk-devel
 BuildRequires: libX11-devel
 BuildRequires: gcc-gfortran
 BuildRequires: perl
+BuildRequires: motif-devel
 
 Requires(post): /sbin/ldconfig
 Requires(postun): /sbin/ldconfig
@@ -83,6 +85,27 @@ Provides: tk-%{name}-devel = %{version}-%{release}
 Libraries, includes, etc. used to develop an application using
 the %{name} Tcl/Tk driver.
 
+%package -n motif-%{name}
+Summary: MOTIF driver for %{name}
+Group: Development/Libraries
+Requires: %{name} = %{version}-%{release}
+#Requires: tcl(abi) = 8.5
+Provides: motif-%{name} = %{version}-%{release}
+
+%description -n motif-%{name}
+MOTIF driver for %{name}
+
+%package -n motif-%{name}-devel
+Summary: MOTIF driver for %{name} devel files
+Group: Development/Libraries
+Requires: motif-%{name} = %{version}-%{release}
+Requires: %{name}-devel = %{version}-%{release}
+Provides: motif-%{name}-devel = %{version}-%{release}
+
+%description -n motif-%{name}-devel
+Libraries and h files used to develop an application using
+the %{name} MOTIF driver.
+
 %prep
 %setup -q -n %{name}
 
@@ -100,6 +123,7 @@ cp %{SOURCE2} .
 cp %{SOURCE3} .
 cp %{SOURCE4} pkgIndex.tcl
 cp %{SOURCE5} .
+cp %{SOURCE6} .
 
 # Enabling the following drivers:
 # PS, TCL/TK and X
@@ -108,7 +132,8 @@ cp %{SOURCE5} .
 -e 's/! XWDRIV/  XWDRIV/g' \
 -e 's/! TKDRIV/  TKDRIV/g' \
 -e 's/! PPDRIV/  PPDRIV/g' \
--e 's/! GIDRIV/  GIDRIV/g' -i drivers.list
+-e 's/! GIDRIV/  GIDRIV/g' \
+-e 's/! XMDRIV/  XMDRIV/g' -i drivers.list
 
 # Creating pkgconfig files from templates
 %{__sed} -e 's|archlibdir|%{_libdir}|g' -i pgplot.pc
@@ -137,7 +162,14 @@ cp %{SOURCE5} .
 %{__ar} x libtkpgplot.a
 %{__cc} %{optflags} -shared -o libtk%{name}.so.%{version} \
     -Wl,-soname,libtk%{name}.so.%{lvmajor} \
-    tkpgplot.o -L . -l%{name} -ltk -ltcl -lX11 
+    tkpgplot.o -L . -l%{name} -ltk -ltcl -lX11
+
+# Creating dynamic library for MOTIF
+%{__ar} x libXmPgplot.a
+%{__cc} %{optflags} -shared -o libXmPgplot.so.%{version} \
+    -Wl,-soname,libXmPgplot.so.%{lvmajor} \
+    XmPgplot.o -L . -l%{name} -lX11
+
 
 for i in lib*.so.%{version}; do
   chmod 755 $i
@@ -149,6 +181,9 @@ done
 %{__ln_s} libc%{name}.so.%{version} libc%{name}.so
 %{__ln_s} libtk%{name}.so.%{version} libtk%{name}.so.%{lvmajor}
 %{__ln_s} libtk%{name}.so.%{version} libtk%{name}.so
+%{__ln_s} libXmPgplot.so.%{version} libXmPgplot.so.%{lvmajor}
+%{__ln_s} libXmPgplot.so.%{version} libXmPgplot.so
+
 
 %{make_build} pgplot-routines.tex
 %{make_build} pgplot.html
@@ -161,6 +196,8 @@ done
 %{__mkdir_p} %{buildroot}/%{_libexecdir}/%{name}
 %{__mkdir_p} %{buildroot}/%{tcl_sitearch}/%{name}
 %{__cp} -a  lib*%{name}.so* %{buildroot}/%{_libdir}
+%{__cp} -a  libXmPgplot.so* %{buildroot}/%{_libdir}
+%{__install} -p -m 644 XmPgplot.h %{buildroot}/%{_includedir}
 %{__install} -p -m 644 cpgplot.h %{buildroot}/%{_includedir}
 %{__install} -p -m 644 tkpgplot.h %{buildroot}/%{_includedir}
 %{__install} -p -m 644 rgb.txt %{buildroot}/%{_datadir}/%{name}
@@ -205,6 +242,16 @@ done
 %{_libdir}/libtk%{name}.so
 %{_includedir}/tkpgplot.h
 %{_libdir}/pkgconfig/tk-pgplot.pc
+
+%files -n motif-%{name}
+%doc copyright.notice
+%{_libdir}/libXmPgplot.so.*
+
+%files -n motif-%{name}-devel
+%doc copyright.notice
+%{_libdir}/libXmPgplot.so
+%{_includedir}/XmPgplot.h
+%{_libdir}/pkgconfig/motif-pgplot.pc
 
 %files demos
 %license copyright.notice
