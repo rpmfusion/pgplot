@@ -3,7 +3,7 @@
 Name: pgplot 
 %define lvmajor 5
 Version: 5.2.2
-Release: 55%{?dist}
+Release: 56%{?dist}
 Summary: Graphic library for making simple scientific graphs
 
 License: freely available for non-commercial use
@@ -258,6 +258,9 @@ done
 %{_bindir}/*
 
 %changelog
+* Thu Aug 03 2023 RPM Fusion Release Engineering <sergiomb@rpmfusion.org> - 5.2.2-56
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_39_Mass_Rebuild
+
 * Wed Jan 25 2023 Sérgio Basto <sergio@serjux.com> - 5.2.2-55
 - Adding motif driver to pgplot.
 
