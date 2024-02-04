@@ -1,5 +1,6 @@
 %{!?tcl_version: %define tcl_version %(echo 'puts $tcl_version' | tclsh)}
 %{!?tcl_sitearch: %define tcl_sitearch %{_libdir}/tcl%{tcl_version}}
+%global build_type_safety_c 0
 Name: pgplot 
 %define lvmajor 5
 Version: 5.2.2
@@ -31,6 +32,7 @@ Patch4: pgplot5.2-tclpackage.patch
 # Fix format error 
 Patch5: pgplot5.2-formaterror.patch
 Patch6: pgplot5.2-tcl86.patch
+Patch7: gcc14_buildfix.patch
 
 BuildRequires: tk-devel
 BuildRequires: libX11-devel
@@ -109,14 +111,15 @@ the %{name} MOTIF driver.
 %prep
 %setup -q -n %{name}
 
-%patch0 -p1
-%patch1 -p1
-%patch2 -p1
+%patch -P0 -p1
+%patch -P1 -p1
+%patch -P2 -p1
 # PNG disabled
-#%patch3 -p1
-%patch4 -p1
-%patch5 -p1
-%patch6 -p1
+#%patch -P3 -p1
+%patch -P4 -p1
+%patch -P5 -p1
+%patch -P6 -p1
+%patch -P7 -p1
 
 cp %{SOURCE1} .
 cp %{SOURCE2} .
