@@ -4,7 +4,7 @@
 Name: pgplot 
 %define lvmajor 5
 Version: 5.2.2
-Release: 57%{?dist}
+Release: 58%{?dist}
 Summary: Graphic library for making simple scientific graphs
 
 License: freely available for non-commercial use
@@ -261,6 +261,9 @@ done
 %{_bindir}/*
 
 %changelog
+* Sat Aug 03 2024 RPM Fusion Release Engineering <sergiomb@rpmfusion.org> - 5.2.2-58
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_41_Mass_Rebuild
+
 * Sun Feb 04 2024 RPM Fusion Release Engineering <sergiomb@rpmfusion.org> - 5.2.2-57
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_40_Mass_Rebuild
 
