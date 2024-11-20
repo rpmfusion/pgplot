@@ -1,1 +1,8 @@
-pgplot5.2.tar.gz
+# editor files
+*~
+\#*
+
+# ignore package/distribution files
+*.rpm
+*.tgz
+*.zip
