@@ -5,6 +5,6 @@ includedir=/usr/include
 
 Name: tk-pgplot
 Description: Tcl/Tk driver for pgplot
-Version: 5.2.2
+Version: @VERSION@
 Libs: -L${libdir} -lpgplot -lgfortran -lm -lX11 -lpng
 Cflags: -I${includedir}
