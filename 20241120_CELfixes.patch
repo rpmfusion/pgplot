@@ -1,0 +1,1541 @@
+diff -up ./pgplot/drivers/gidriv.f.orig ./pgplot/drivers/gidriv.f
+--- ./pgplot/drivers/gidriv.f.orig	2024-11-20 13:25:33.000000000 -0500
++++ ./pgplot/drivers/gidriv.f	2024-11-20 13:32:58.390983604 -0500
+@@ -72,13 +72,16 @@ C
+       INTEGER UNIT, IC, NPICT, MAXIDX, STATE
+       INTEGER CTABLE(3,0:255), CDEFLT(3,0:15)
+       INTEGER IER, I, L, LL, IX0, IY0, IX1, IY1, USERW, USERH, JUNK
+-      INTEGER GRGMEM, GRFMEM, GROFIL, GRCFIL, GRCTOI
++C      INTEGER GRGMEM, GRFMEM
++      INTEGER GROFIL, GRCFIL, GRCTOI
+       CHARACTER*80 MSG, INSTR, FILENM
+ C
+ C Note: for 64-bit operating systems, change the following 
+ C declaration to INTEGER*8:
+ C
+-      INTEGER PIXMAP, WORK
++c     INTEGER PIXMAP, WORK
++      BYTE, ALLOCATABLE, DIMENSION (:,:) :: PIXMAP
++      INTEGER*2 WORK(0:4097,0:255)
+ C
+       SAVE UNIT, IC, CTABLE, NPICT, MAXIDX, BX, BY, PIXMAP, FILENM
+       SAVE CDEFLT, STATE
+@@ -89,6 +92,7 @@ C
+       DATA STATE /0/
+ C-----------------------------------------------------------------------
+ C
++      
+       GOTO( 10, 20, 30, 40, 50, 60, 70, 80, 90,100,
+      1     110,120,130,140,150,160,170,180,190,200,
+      2     210,220,230,240,250,260,270,280,290), IFUNC
+@@ -235,17 +239,17 @@ C
+   110 CONTINUE
+       BX = NINT(RBUF(1))+1
+       BY = NINT(RBUF(2))+1
+-      IER = GRGMEM(BX*BY, PIXMAP)
+-      IF (IER.NE.1) THEN
++C     IER = GRGMEM(BX*BY, PIXMAP)
++      ALLOCATE(PIXMAP(BX,BY))
++      IF (.NOT. ALLOCATED(PIXMAP)) THEN
+          CALL GRGMSG(IER)
+          CALL GRWARN('Failed to allocate plot buffer.')
+          BX = 0
+          BY = 0
+-         PIXMAP = 0
+       END IF
+ C     -- initialize to zero (background color)
+-      IF (PIXMAP.NE.0) 
+-     :     CALL GRGI03(1, 1, BX, BY, 0, BX, BY, %VAL(PIXMAP))
++      IF (ALLOCATED(PIXMAP)) 
++     :     CALL GRGI03(1, 1, BX, BY, 0, BX, BY, PIXMAP)
+       IF (NPICT.GT.1) THEN
+          CALL GRGI10 (FILENM, NPICT, MSG)
+          UNIT = GROFIL(MSG)
+@@ -262,8 +266,8 @@ C
+       IX1=NINT(RBUF(3))+1
+       IY0=BY-NINT(RBUF(2))
+       IY1=BY-NINT(RBUF(4))
+-      IF (PIXMAP.NE.0)
+-     :     CALL GRGI01(IX0, IY0, IX1, IY1, IC, BX, BY, %VAL(PIXMAP))
++      IF (ALLOCATED(PIXMAP))
++     :     CALL GRGI01(IX0, IY0, IX1, IY1, IC, BX, BY, PIXMAP)
+       RETURN
+ C
+ C--- IFUNC=13, Draw dot ------------------------------------------------
+@@ -271,37 +275,38 @@ C
+   130 CONTINUE
+       IX0=NINT(RBUF(1))+1
+       IY0=BY-NINT(RBUF(2))
+-      IF (PIXMAP.NE.0)
+-     :     CALL GRGI01(IX0, IY0, IX0, IY0, IC, BX, BY, %VAL(PIXMAP))
++      IF (ALLOCATED(PIXMAP))
++     :     CALL GRGI01(IX0, IY0, IX0, IY0, IC, BX, BY, PIXMAP)
+       RETURN
+ C
+ C--- IFUNC=14, End picture ---------------------------------------------
+ C
+   140 CONTINUE
+       IF (UNIT.GE.0) THEN
+-         IER = GRGMEM(2*256*4098, WORK)
+-         IF (IER.NE.1) THEN
+-            CALL GRGMSG(IER)
+-            CALL GRWARN('Failed to allocate work array.')
+-         ELSE
+-            CALL GRGI06(UNIT, BX, BY, CTABLE, %VAL(PIXMAP), MAXIDX,
+-     :                  %VAL(WORK))
+-         END IF
++c         IER = GRGMEM(2*256*4098, WORK)
++C         IF (IER.NE.1) THEN
++C            CALL GRGMSG(IER)
++C            CALL GRWARN('Failed to allocate work array.')
++C         ELSE
++            CALL GRGI06(UNIT, BX, BY, CTABLE, PIXMAP, MAXIDX,
++     :                  WORK)
++C        END IF
+          JUNK = GRCFIL(UNIT)
+-         IER = GRFMEM(2*256*4098, WORK)
++C         IER = GRFMEM(2*256*4098, WORK)
+       END IF
+       NPICT = NPICT+1
+-      IER = GRFMEM(BX*BY, PIXMAP)
+-      IF (IER.NE.1) THEN
+-         CALL GRGMSG(IER)
+-         CALL GRWARN('Failed to deallocate plot buffer.')
+-      END IF
++C     IER = GRFMEM(BX*BY, PIXMAP)
++      DEALLOCATE(PIXMAP)
++C      IF (IER.NE.1) THEN
++C         CALL GRGMSG(IER)
++C         CALL GRWARN('Failed to deallocate plot buffer.')
++C      END IF
+       RETURN
+ C
+ C--- IFUNC=15, Select color index --------------------------------------
+ C
+   150 CONTINUE
+-      IC = RBUF(1)
++      IC = INT(RBUF(1))
+       MAXIDX = MAX(MAXIDX, IC)
+       RETURN
+ C
+@@ -338,7 +343,7 @@ C
+ C--- IFUNC=21, Set color representation. -------------------------------
+ C
+   210 CONTINUE
+-      I = RBUF(1)
++      I = INT(RBUF(1))
+       CTABLE(1, I) = NINT(RBUF(2)*255)
+       CTABLE(2, I) = NINT(RBUF(3)*255)
+       CTABLE(3, I) = NINT(RBUF(4)*255)
+@@ -363,8 +368,8 @@ C
+       IX1=NINT(RBUF(3))+1
+       IY1=BY-NINT(RBUF(2))
+       IY0=BY-NINT(RBUF(4))
+-      IF (PIXMAP.NE.0) 
+-     :     CALL GRGI03(IX0, IY0, IX1, IY1, IC, BX, BY, %VAL(PIXMAP))
++      IF (ALLOCATED(PIXMAP)) 
++     :     CALL GRGI03(IX0, IY0, IX1, IY1, IC, BX, BY, PIXMAP)
+       RETURN
+ C
+ C--- IFUNC=25, Not implemented -----------------------------------------
+@@ -375,7 +380,7 @@ C
+ C--- IFUNC=26, Line of pixels ------------------------------------------
+ C
+   260 CONTINUE
+-      CALL GRGI04(NBUF, RBUF, BX, BY, %VAL(PIXMAP), MAXIDX)
++      CALL GRGI04(NBUF, RBUF, BX, BY, PIXMAP, MAXIDX)
+       RETURN
+ C
+ C--- IFUNC=27, Not implemented -----------------------------------------
+@@ -391,7 +396,7 @@ C
+ C--- IFUNC=29, Query color representation. -----------------------------
+ C
+   290 CONTINUE
+-      I = RBUF(1)
++      I = INT(RBUF(1))
+       RBUF(2) = CTABLE(1,I)/255.0
+       RBUF(3) = CTABLE(2,I)/255.0
+       RBUF(4) = CTABLE(3,I)/255.0
+@@ -403,6 +408,7 @@ C---------------------------------------
+ **GRGI01 -- PGPLOT GIF driver, draw line
+ *+
+       SUBROUTINE GRGI01 (IX0, IY0, IX1, IY1, ICOL, BX, BY, PIXMAP)
++      USE ISO_FORTRAN_ENV
+       INTEGER IX0, IY0, IX1, IY1
+       INTEGER ICOL, BX, BY
+       BYTE PIXMAP(BX,BY)
+@@ -419,9 +425,9 @@ C---------------------------------------
+       BYTE    VAL
+ *
+       IF (ICOL.GT.127) THEN
+-         VAL = ICOL-256
++         VAL = INT(IAND(ICOL-256,255),KIND=INT8)
+       ELSE
+-         VAL = ICOL
++         VAL = INT(IAND(ICOL,255),KIND=INT8)
+       END IF
+       IF (IX0.EQ.IX1 .AND. IY0.EQ.IY1) THEN
+          PIXMAP(IX0,IY0)=VAL
+@@ -447,6 +453,7 @@ C---------------------------------------
+ **GRGI03 -- PGPLOT GIF driver, fill rectangle
+ *+
+       SUBROUTINE GRGI03 (IX0, IY0, IX1, IY1, ICOL, BX, BY, PIXMAP)
++      USE ISO_FORTRAN_ENV
+       INTEGER IX0, IY0, IX1, IY1
+       INTEGER ICOL, BX, BY
+       BYTE PIXMAP(BX,BY)
+@@ -462,9 +469,9 @@ C---------------------------------------
+       BYTE VAL
+ C
+       IF (ICOL.GT.127) THEN
+-         VAL = ICOL-256
++         VAL = INT(IAND(ICOL-256,255),KIND=INT8)
+       ELSE
+-         VAL = ICOL
++         VAL = INT(IAND(ICOL,255),KIND=INT8)
+       END IF
+       DO 20 IY=IY0,IY1
+          DO 10 IX=IX0,IX1
+@@ -476,6 +483,7 @@ C
+ **GRGI04 -- PGPLOT GIF driver, fill image line
+ *+
+       SUBROUTINE GRGI04(NBUF,RBUF,BX,BY,PIXMAP,MAXIDX)
++      USE ISO_FORTRAN_ENV
+       INTEGER I,J,NBUF,BX,BY,N,IC,MAXIDX
+       REAL RBUF(NBUF)
+       BYTE PIXMAP(BX,BY)
+@@ -483,19 +491,20 @@ C
+       I = NINT(RBUF(1))+1
+       J = BY-NINT(RBUF(2))
+       DO 10 N=3,NBUF
+-         IC=RBUF(N)
++         IC=INT(RBUF(N))
+          MAXIDX=MAX(MAXIDX,IC)
+          IF (IC.GT.127) IC = IC-256
+-         PIXMAP(I+N-3,J)=IC
++         PIXMAP(I+N-3,J)=INT(IAND(IC,255),KIND=INT8)
+  10   CONTINUE
+       END
+ 
+ **GRGI06 -- PGPLOT GIF driver, write GIF image
+ *+
+       SUBROUTINE GRGI06 (UNIT, BX, BY, CTABLE, PIXMAP, MAXIDX, CODE)
++      USE ISO_FORTRAN_ENV
+       INTEGER UNIT, BX, BY, MAXIDX
+       INTEGER CTABLE(3,0:255)
+-      BYTE PIXMAP(BX * BY)
++      BYTE PIXMAP(BX,BY)
+       INTEGER*2 CODE(0:4097,0:255)
+ *
+ * Write GIF image to UNIT.
+@@ -516,6 +525,8 @@ C
+       INTEGER OLDPRE, BITS
+       INTEGER GRWFCH, GRWFIL
+       BYTE BLKOUT(0:254)
++      BYTE PIXMAP1
++
+       COMMON /GRGICO/ BMAX, BMULT, BREST, BOUT, BLKOUT
+ 
+       BITS = 1
+@@ -570,9 +581,11 @@ C Start packing variable-size codes into
+ C Push a clear code first.
+ C `Read' first character.
+ C
+-      DO 100 M=0,255
+-         DO 100 K=0,4095
+-  100       CODE(K,M)=0
++      DO  M=0,255
++         DO  K=0,4095
++ 100        CODE(K,M)=0
++         END DO
++      END DO
+       CLEAR=2**PIXEL
+       EOI=CLEAR + 1
+       BREST=0
+@@ -582,7 +595,7 @@ C
+       CALL GRGI07(UNIT, CLEAR)
+       IN=1
+       TOTAL=BX*BY
+-      PRE=PIXMAP(IN)
++      PRE=PIXMAP1(PIXMAP,BX,BY,IN)
+       IF (PRE.LT.0) PRE = PRE+256
+ *
+ * Start new data stream at line 310:
+@@ -600,7 +613,7 @@ C
+ *
+   320 IF (IN.GE.TOTAL) GOTO 350
+       IN=IN+1
+-      EXT=PIXMAP(IN)
++      EXT=PIXMAP1(PIXMAP,BX,BY,IN)
+       IF (EXT.LT.0) EXT = EXT+256
+       OLDPRE=PRE
+       PRE=CODE(PRE,EXT)
+@@ -610,14 +623,16 @@ C
+ *
+       TABLE=TABLE+1
+       CALL GRGI07(UNIT, OLDPRE)
+-      CODE(OLDPRE,EXT)=TABLE
++      CODE(OLDPRE,EXT)=INT(IAND(TABLE,Z'ffff'),KIND=INT16)
+       PRE=EXT
+       IF (TABLE.EQ.BMAX) BMAX=BMAX*2
+       IF (TABLE.LT.4095) GOTO 320
+       CALL GRGI07(UNIT, CLEAR)
+-      DO 330 M=0,255
+-         DO 330 K=0,4095
+-  330       CODE(K,M)=0
++      DO M=0,255
++         DO K=0,4095
++ 330        CODE(K,M)=0
++         END DO
++      END DO
+       GOTO 310
+ *
+ * Last character
+@@ -627,9 +642,9 @@ C
+       IF (BMULT.GT.1) CALL GRGI08(UNIT, BREST)
+       IF (BOUT.GT.0) THEN
+          IF (BOUT.GT.127) THEN
+-            BLKOUT(0) = BOUT-256
++            BLKOUT(0) = INT(IAND(BOUT-256,255),KIND=INT8)
+          ELSE
+-            BLKOUT(0) = BOUT
++            BLKOUT(0) = INT(IAND(BOUT,255),KIND=INT8)
+          END IF
+          I = GRWFIL (UNIT, BOUT+1, BLKOUT(0))
+          BOUT = 0
+@@ -664,6 +679,7 @@ C
+ **GRGI08 -- Compile and write GIF output buffer
+ *
+       SUBROUTINE GRGI08(UNIT, INCODE)
++      USE ISO_FORTRAN_ENV
+       INTEGER UNIT, INCODE, I, J, GRWFIL
+       INTEGER BMAX, BMULT, BREST, BOUT
+       BYTE BLKOUT(0:254)
+@@ -672,7 +688,7 @@ C
+       BOUT = BOUT + 1
+       J = MOD(INCODE,256)
+       IF (J.GT.127) J = J-256
+-      BLKOUT(BOUT) = J
++      BLKOUT(BOUT) = INT(IAND(J,255),KIND=INT8)
+       IF (BOUT .LT. 254) RETURN
+ C!        changed 1997-Sep-2
+       BLKOUT(0) = 254-256
+@@ -723,3 +739,19 @@ C        -- last resort: invent a new na
+       CALL GRWARN ('Writing new GIF image as: '//TMP(:L))
+       NAME2 = TMP(:L)
+       END
++
++      BYTE FUNCTION PIXMAP1(PIXMAP,BX,BY,N)
++      IMPLICIT NONE
++      INTEGER N, BX, BY
++      BYTE PIXMAP(BX,BY)
++      INTEGER JX, JY
++C
++C     CONVERT 1D ARRAY INDEX TO 2D INDICES (JX,JY) FOR ARRAY OF
++C     SIZE (BX,BY)
++C
++      JX = MOD(N-1,BX)+1
++      JY = INT((N-1)/BX)+1
++      PIXMAP1 = PIXMAP(JX,JY)
++      RETURN
++      END
++      
+diff -up ./pgplot/drivers/nudriv.f.orig ./pgplot/drivers/nudriv.f
+--- ./pgplot/drivers/nudriv.f.orig	2024-11-20 13:25:33.000000000 -0500
++++ ./pgplot/drivers/nudriv.f	2024-11-20 13:32:58.385983619 -0500
+@@ -159,7 +159,7 @@ C
+ C--- IFUNC = 8, Select plot. -------------------------------------------
+ C
+    80 CONTINUE
+-      I = RBUF(2) - 67890
++      I = INT(RBUF(2)) - 67890
+       IF (I.LT.1 .OR. I.GT.MAXDEV) THEN
+          CALL GRWARN('internal error: NULL opcode 8')
+       ELSE IF (STATE(I).GT.0) THEN
+@@ -305,7 +305,7 @@ C--- IFUNC=21, Set color representation.
+ C
+   210 CONTINUE
+       IF (STATE(ACTIVE).LT.1) CALL GRNU00(IFUNC,STATE(ACTIVE))
+-      I = RBUF(1)
++      I = INT(RBUF(1))
+       CTABLE(1, I) = NINT(RBUF(2)*255)
+       CTABLE(2, I) = NINT(RBUF(3)*255)
+       CTABLE(3, I) = NINT(RBUF(4)*255)
+@@ -357,7 +357,7 @@ C--- IFUNC=29, Query color representatio
+ C
+   290 CONTINUE
+       IF (STATE(ACTIVE).LT.1) CALL GRNU00(IFUNC,STATE(ACTIVE))
+-      I = RBUF(1)
++      I = INT(RBUF(1))
+       RBUF(2) = CTABLE(1,I)/255.0
+       RBUF(3) = CTABLE(2,I)/255.0
+       RBUF(4) = CTABLE(3,I)/255.0
+diff -up ./pgplot/drivers/pndriv.c.orig ./pgplot/drivers/pndriv.c
+--- ./pgplot/drivers/pndriv.c.orig	2024-11-20 13:25:33.000000000 -0500
++++ ./pgplot/drivers/pndriv.c	2024-11-20 13:32:58.380983635 -0500
+@@ -593,16 +593,16 @@ void PNDRIV(int *opcode, float *rbuf, in
+ 	*nbuf = 3;
+ 	break;
+ 
+-	/* return device capabilities */
++	/* return device capabilities (length+1 for null at end)*/
+   case 4:
+ 	*lchr = strlen(DEVICE_CAPABILITIES);
+-	strncpy(chr,DEVICE_CAPABILITIES,*lchr);
++	strncpy(chr,DEVICE_CAPABILITIES,*lchr+1);
+ 	break;
+ 
+ 	/* return default device filename */
+   case 5:
+ 	*lchr = strlen(DEFAULT_FILENAME);
+-	strncpy(chr,DEFAULT_FILENAME,*lchr);
++	strncpy(chr,DEFAULT_FILENAME,*lchr+1);
+ 	break;
+ 
+ 	/* default edge coordinates of view surface */
+diff -up ./pgplot/drivers/ppdriv.f.orig ./pgplot/drivers/ppdriv.f
+--- ./pgplot/drivers/ppdriv.f.orig	2024-11-20 13:25:33.000000000 -0500
++++ ./pgplot/drivers/ppdriv.f	2024-11-20 13:32:58.380983635 -0500
+@@ -62,13 +62,15 @@ C
+       INTEGER UNIT, IC, CVAL, CTABLE(3,0:255), IER, I, L, LL, NPICT
+       INTEGER BX, BY, IX0, IY0, IX1, IY1, R, G, B, STATE, USERH, USERW
+       INTEGER CDEFLT(3,0:15), JUNK
+-      INTEGER GRGMEM, GRFMEM, GROFIL, GRCFIL, GRCTOI
++C      INTEGER GRGMEM, GRFMEM   ! unused since allocation stuff
++      INTEGER GROFIL, GRCFIL, GRCTOI
+       CHARACTER*80 MSG, INSTR, FILENM
+ C
+ C Note: for 64-bit operating systems, change the following 
+ C declaration to INTEGER*8:
+ C
+-      INTEGER PIXMAP
++c     INTEGER PIXMAP
++      INTEGER *4, ALLOCATABLE, DIMENSION (:,:) :: PIXMAP
+ C
+       SAVE    UNIT, IC, CVAL, CTABLE, BX, BY, PIXMAP, NPICT, CDEFLT
+       SAVE    STATE
+@@ -225,17 +227,18 @@ C
+       BX = NINT(RBUF(1))+1
+       BY = NINT(RBUF(2))+1
+ C     -- allocate buffer with 4 bytes per pixel
+-      IER = GRGMEM(4*BX*BY, PIXMAP)
+-      IF (IER.NE.1) THEN
+-         CALL GRGMSG(IER)
++C     IER = GRGMEM(4*BX*BY, PIXMAP)
++      ALLOCATE(PIXMAP(BX,BY))
++      IF (.NOT. ALLOCATED(PIXMAP)) THEN
++C         CALL GRGMSG(IER)
+          CALL GRWARN('Failed to allocate plot buffer.')
+          BX = 0
+          BY = 0
+-         PIXMAP = 0
++C         PIXMAP = 0
+       END IF
+ C     -- initialize to zero (background color)
+-      IF (PIXMAP.NE.0) 
+-     :     CALL GRPP03(1, 1, BX, BY, 0, BX, BY, %VAL(PIXMAP))
++      IF (ALLOCATED(PIXMAP)) 
++     :     CALL GRPP03(1, 1, BX, BY, 0, BX, BY, PIXMAP)
+ C     -- open new file if necessary
+       IF (NPICT.GT.1) THEN
+           CALL GRPP10 (FILENM, NPICT, MSG)
+@@ -253,8 +256,8 @@ C
+       IX1=NINT(RBUF(3))+1
+       IY0=BY-NINT(RBUF(2))
+       IY1=BY-NINT(RBUF(4))
+-      IF (PIXMAP.NE.0) 
+-     :     CALL GRPP01(IX0, IY0, IX1, IY1, CVAL, BX, BY, %VAL(PIXMAP))
++      IF (ALLOCATED(PIXMAP)) 
++     :     CALL GRPP01(IX0, IY0, IX1, IY1, CVAL, BX, BY, PIXMAP)
+       RETURN
+ C
+ C--- IFUNC=13, Draw dot ------------------------------------------------
+@@ -262,22 +265,23 @@ C
+   130 CONTINUE
+       IX0=NINT(RBUF(1))+1
+       IY0=BY-NINT(RBUF(2))
+-      IF (PIXMAP.NE.0) 
+-     :     CALL GRPP01(IX0, IY0, IX0, IY0, CVAL, BX, BY, %VAL(PIXMAP))
++      IF (ALLOCATED(PIXMAP)) 
++     :     CALL GRPP01(IX0, IY0, IX0, IY0, CVAL, BX, BY, PIXMAP)
+       RETURN
+ C
+ C--- IFUNC=14, End picture ---------------------------------------------
+ C
+   140 CONTINUE
+-      IF (PIXMAP.NE.0) THEN
+-         CALL GRPP02(UNIT, BX, BY, %VAL(PIXMAP))
++      IF (ALLOCATED(PIXMAP)) THEN
++         CALL GRPP02(UNIT, BX, BY, PIXMAP)
+          IF (UNIT.GE.0) JUNK = GRCFIL(UNIT)
+          NPICT = NPICT+1
+-         IER = GRFMEM(4*BX*BY, PIXMAP)
+-         IF (IER.NE.1) THEN
+-            CALL GRGMSG(IER)
+-            CALL GRWARN('Failed to deallocate plot buffer.')
+-         END IF
++         DEALLOCATE(PIXMAP)
++C         IER = GRFMEM(4*BX*BY, PIXMAP)
++C         IF (IER.NE.1) THEN
++C            CALL GRGMSG(IER)
++C            CALL GRWARN('Failed to deallocate plot buffer.')
++C         END IF
+       END IF
+       RETURN
+ C
+@@ -352,8 +356,8 @@ C
+       IX1=NINT(RBUF(3))+1
+       IY1=BY-NINT(RBUF(2))
+       IY0=BY-NINT(RBUF(4))
+-      IF (PIXMAP.NE.0) 
+-     :     CALL GRPP03(IX0, IY0, IX1, IY1, CVAL, BX, BY, %VAL(PIXMAP))
++      IF (ALLOCATED(PIXMAP)) 
++     :     CALL GRPP03(IX0, IY0, IX1, IY1, CVAL, BX, BY, PIXMAP)
+       RETURN
+ C
+ C--- IFUNC=25, Not implemented -----------------------------------------
+@@ -364,8 +368,8 @@ C
+ C--- IFUNC=26, Line of pixels ------------------------------------------
+ C
+   260 CONTINUE
+-      IF (PIXMAP.NE.0)
+-     :     CALL GRPP04(NBUF, RBUF, BX, BY, %VAL(PIXMAP), CTABLE)
++      IF (ALLOCATED(PIXMAP))
++     :     CALL GRPP04(NBUF, RBUF, BX, BY, PIXMAP, CTABLE)
+       RETURN
+ C
+ C--- IFUNC=27, Not implemented -----------------------------------------
+@@ -381,7 +385,7 @@ C
+ C--- IFUNC=29, Query color representation. -----------------------------
+ C
+   290 CONTINUE
+-      I = RBUF(1)
++      I = INT(RBUF(1))
+       RBUF(2) = CTABLE(1,I)/255.0
+       RBUF(3) = CTABLE(2,I)/255.0
+       RBUF(4) = CTABLE(3,I)/255.0
+@@ -394,7 +398,8 @@ C---------------------------------------
+ *+
+       SUBROUTINE GRPP01 (IX0, IY0, IX1, IY1, ICOL, BX, BY, PIXMAP)
+       INTEGER IX0, IY0, IX1, IY1
+-      INTEGER ICOL, BX, BY, PIXMAP(BX,BY)
++      INTEGER ICOL, BX, BY
++      INTEGER *4 PIXMAP(BX,BY)
+ *
+ * Draw a straight-line segment from absolute pixel coordinates
+ * (IX0, IY0) to (IX1, IY1).
+@@ -436,7 +441,8 @@ C
+ **GRPP02 -- PGPLOT PPM driver, write PPM image
+ *+
+       SUBROUTINE GRPP02 (UNIT, BX, BY, PIXMAP)
+-      INTEGER UNIT, BX, BY, PIXMAP(*)
++      INTEGER UNIT, BX, BY
++      INTEGER *4 PIXMAP(BX,BY)
+ *
+ * This routine copies the image buffer to an output buffer. A PPM image
+ * header and the output buffer are written to UNIT.
+@@ -478,9 +484,12 @@ C
+       IBUF=0
+       BAD = .FALSE.
+       DO 10 I=1,N
+-         BUF(IBUF+1:IBUF+1) = CHAR(MOD(PIXMAP(I),256))
+-         BUF(IBUF+2:IBUF+2) = CHAR(MOD(PIXMAP(I)/256,256))
+-         BUF(IBUF+3:IBUF+3) = CHAR(PIXMAP(I)/(256*256))
++         BUF(IBUF+1:IBUF+1) = CHAR(MOD(
++     +        PIXMAP(INT(I/BX)+1,MOD(I,BY)+1),256))
++         BUF(IBUF+2:IBUF+2) = CHAR(MOD(
++     +        PIXMAP(INT(I/BX)+1,MOD(I,BY)+1)/256,256))
++         BUF(IBUF+3:IBUF+3) = CHAR(
++     +        PIXMAP(INT(I/BX)+1,MOD(I,BY)+1)/(256*256))
+          IBUF = IBUF+3
+          IF (IBUF.GE.BUFSIZ) THEN
+             IER = GRWFCH(UNIT, BUF)
+@@ -500,7 +509,8 @@ C
+ *+
+       SUBROUTINE GRPP03 (IX0, IY0, IX1, IY1, ICOL, BX, BY, PIXMAP)
+       INTEGER IX0, IY0, IX1, IY1
+-      INTEGER ICOL, BX, BY, PIXMAP(BX,BY)
++      INTEGER ICOL, BX, BY
++      INTEGER *4 PIXMAP(BX,BY)
+ *
+ * Arguments:
+ *  IX0, IY0        (input): Lower left corner.
+@@ -523,14 +533,14 @@ C
+       SUBROUTINE GRPP04(NBUF,RBUF,BX,BY,PIXMAP,CTABLE)
+       INTEGER I,J,NBUF,BX,BY,N,IC
+       REAL RBUF(NBUF)
+-      INTEGER PIXMAP(BX,BY)
++      INTEGER*4 PIXMAP(BX,BY)
+       INTEGER CTABLE(3,0:255)
+       INTEGER R, G, B
+ *-
+       I = NINT(RBUF(1))+1
+       J = BY-NINT(RBUF(2))
+       DO 10 N=3,NBUF
+-         IC=RBUF(N)
++         IC=INT(RBUF(N))
+          R = CTABLE(1,IC)
+          G = CTABLE(2,IC)
+          B = CTABLE(3,IC)
+diff -up ./pgplot/drivers/psdriv.f.orig ./pgplot/drivers/psdriv.f
+--- ./pgplot/drivers/psdriv.f.orig	2024-11-20 13:25:33.000000000 -0500
++++ ./pgplot/drivers/psdriv.f	2024-11-20 13:32:58.381983632 -0500
+@@ -504,11 +504,11 @@ C
+   110 CONTINUE
+       LANDSC = MODE.EQ.1 .OR. MODE.EQ.3
+       IF (LANDSC) THEN
+-         HEIGHT = RBUF(1)
+-         WIDTH = RBUF(2)
++         HEIGHT = INT(RBUF(1))
++         WIDTH = INT(RBUF(2))
+       ELSE
+-         WIDTH = RBUF(1)
+-         HEIGHT = RBUF(2)
++         WIDTH = INT(RBUF(1))
++         HEIGHT = INT(RBUF(2))
+       END IF
+       NPAGE = NPAGE+1
+       CALL GRPS02(IOERR, UNIT, ' ')
+@@ -682,7 +682,7 @@ C--- IFUNC=20, Polygon fill. -----------
+ C
+   200 CONTINUE
+       IF (NPTS.EQ.0) THEN
+-          NPTS = RBUF(1)
++          NPTS = INT(RBUF(1))
+           START = .TRUE.
+           RETURN
+       ELSE
+@@ -716,12 +716,12 @@ C--- IFUNC=21, Set color representation.
+ C
+   210 CONTINUE
+       IF (COLOR) THEN
+-          CI = RBUF(1)
++          CI = INT(RBUF(1))
+           RVALUE(CI) = RBUF(2)
+           GVALUE(CI) = RBUF(3)
+           BVALUE(CI) = RBUF(4)
+       ELSE
+-          CI = RBUF(1)
++          CI = INT(RBUF(1))
+           RVALUE(CI) = 0.30*RBUF(2) + 0.59*RBUF(3) + 0.11*RBUF(4)
+           GVALUE(CI) = RVALUE(CI)
+           BVALUE(CI) = RVALUE(CI)
+@@ -756,16 +756,16 @@ C
+ C--- IFUNC=26, Image.---------------------------------------------------
+ C
+   260 CONTINUE
+-      N = RBUF(1)
++      N = INT(RBUF(1))
+       IF (N.EQ.0) THEN
+ C         -- First: setup for image
+ C         -- Set clipping region (RBUF(2...5))
+-          NXP = RBUF(2)
+-          NYP = RBUF(3)
+-          XORG = RBUF(4)
+-          XLEN = RBUF(5) - RBUF(4)
+-          YORG = RBUF(6) 
+-          YLEN = RBUF(7) - RBUF(6)
++          NXP = INT(RBUF(2))
++          NYP = INT(RBUF(3))
++          XORG = INT(RBUF(4))
++          XLEN = INT(RBUF(5) - RBUF(4))
++          YORG = INT(RBUF(6)) 
++          YLEN = INT(RBUF(7) - RBUF(6))
+           BBXMIN = MIN(BBXMIN, RBUF(4), RBUF(5))
+           BBXMAX = MAX(BBXMAX, RBUF(4), RBUF(5))
+           BBYMIN = MIN(BBYMIN, RBUF(6), RBUF(7))
+@@ -802,7 +802,7 @@ C            in INSTR, so N must be <= 2
+           KMAX = 1
+           IF (COLOR) KMAX = 3
+           DO 262 I=1,N
+-              CI = RBUF(I+1)
++              CI = INT(RBUF(I+1))
+               RGB(1) = NINT(255.0*RVALUE(CI))
+               RGB(2) = NINT(255.0*GVALUE(CI))
+               RGB(3) = NINT(255.0*BVALUE(CI))
+diff -up ./pgplot/drivers/xtk/pgtkdemo.c.orig ./pgplot/drivers/xtk/pgtkdemo.c
+--- ./pgplot/drivers/xtk/pgtkdemo.c.orig	2024-11-20 13:25:33.000000000 -0500
++++ ./pgplot/drivers/xtk/pgtkdemo.c	2024-11-20 13:32:58.378983641 -0500
+@@ -85,17 +85,17 @@ static Pgdemo *new_Pgdemo(Tcl_Interp *in
+ static Pgdemo *del_Pgdemo(Pgdemo *demo);
+ static void Pgdemo_DeleteProc(ClientData data);
+ static int pgdemo_instance_command(ClientData data, Tcl_Interp *interp,
+-			       int argc, char *argv[]);
++			       int argc, const char *argv[]);
+ static int pgdemo_save_command(Pgdemo *demo, Tcl_Interp *interp, int argc,
+-			       char *argv[]);
++			       const char *argv[]);
+ static int pgdemo_function_command(Pgdemo *demo, Tcl_Interp *interp, int argc,
+-				   char *argv[]);
++				   const char *argv[]);
+ static int pgdemo_slice_command(Pgdemo *demo, Tcl_Interp *interp, int argc,
+-				   char *argv[]);
++				   const char *argv[]);
+ static int pgdemo_redraw_slice_command(Pgdemo *demo, Tcl_Interp *interp,
+-				       int argc, char *argv[]);
++				       int argc, const char *argv[]);
+ static int pgdemo_recolor_image_command(Pgdemo *demo, Tcl_Interp *interp,
+-					int argc, char *argv[]);
++					int argc, const char *argv[]);
+ static int demo_display_fn(Pgdemo *demo, Tcl_Interp *interp, IMAGE_FN(*fn));
+ static int demo_display_image(Pgdemo *demo, int id);
+ static int demo_display_slice(Pgdemo *demo, Vertex *va, Vertex *vb);
+@@ -104,7 +104,7 @@ static void demo_display_busy(Pgdemo *de
+ 
+ static void Pgdemo_DeleteProc(ClientData data);
+ static int create_pgdemo(ClientData data, Tcl_Interp *interp, int argc,
+-			 char *argv[]);
++			 const char *argv[]);
+ 
+ 
+ static int valid_demo_script(char *name);
+@@ -187,21 +187,24 @@ static int n_std_cmap = COUNT(std_cmaps)
+  *  return   int    0 - OK.
+  *                  1 - Error.
+  */
+-int main(int argc, char *argv[])
++int main(int argc, const char *argv[])
+ {
+   char *usage = "Usage: pgtkdemo pgtkdemo.tcl [tk-options].\n";
+ /*
+  * Check whether the first argument names a valid pgtkdemo
+  * script file.
+  */
+-  if(argc < 2 || *argv[1] == '-' || !valid_demo_script(argv[1])) {
+-    fprintf(stderr, usage);
++  if(argc < 2 || *argv[1] == '-' || !valid_demo_script((char *)argv[1])) {
++    fprintf(stderr, "%s", usage);
+     return 1;
+   };
+ /*
+  * Start the application.
++ * tcl/tk 8.6 has inconsistent type problems with Tk_Main macro, so
++ * do explicitly
+  */
+-  Tk_Main(argc, argv, Demo_AppInit);
++  Tk_MainEx(argc, (char **)argv, Demo_AppInit,
++            (Tcl_FindExecutable(argv[0]), Tcl_CreateInterp()));
+   return 0;
+ }
+ 
+@@ -211,6 +214,7 @@ int main(int argc, char *argv[])
+  */
+ int MAIN__(void)
+ {
++  return 0;
+ }
+ 
+ /*.......................................................................
+@@ -253,7 +257,7 @@ static int Demo_AppInit(Tcl_Interp *inte
+  *                          TCL_ERROR - Failure.
+  */
+ static int create_pgdemo(ClientData data, Tcl_Interp *interp, int argc,
+-			 char *argv[])
++			 const char *argv[])
+ {
+   Pgdemo *demo;      /* The new widget instance object */
+ /*
+@@ -268,7 +272,8 @@ static int create_pgdemo(ClientData data
+ /*
+  * Allocate a context object for the command.
+  */
+-  demo = new_Pgdemo(interp, argv[0], argv[1], argv[2], argv[3]);
++  demo = new_Pgdemo(interp, (char *)argv[0], (char *)argv[1],
++                    (char *)argv[2], (char *)argv[3]);
+   if(!demo)
+     return TCL_ERROR;
+   return TCL_OK;
+@@ -446,7 +451,7 @@ static void Pgdemo_DeleteProc(ClientData
+  *                          TCL_ERROR - Failure.
+  */
+ static int pgdemo_instance_command(ClientData data, Tcl_Interp *interp,
+-				   int argc, char *argv[])
++				   int argc, const char *argv[])
+ {
+   Pgdemo *demo = (Pgdemo *) data;
+   char *command;    /* The name of the command */
+@@ -460,7 +465,7 @@ static int pgdemo_instance_command(Clien
+ /*
+  * Get the command-name argument.
+  */
+-  command = argv[1];
++  command = (char *) argv[1];
+   if(strcmp(command, "save") == 0)
+     return pgdemo_save_command(demo, interp, argc - 2, argv + 2);
+   else if(strcmp(command, "function") == 0)
+@@ -494,7 +499,7 @@ static int pgdemo_instance_command(Clien
+  *                                    the error message.
+  */
+ static int pgdemo_save_command(Pgdemo *demo, Tcl_Interp *interp, int argc,
+-			       char *argv[])
++			       const char *argv[])
+ {
+   char *device;  /* The PGPLOT device specification */
+   int device_id; /* The PGPLOT id of the new device */
+@@ -509,7 +514,7 @@ static int pgdemo_save_command(Pgdemo *d
+ /*
+  * Get the device specification.
+  */
+-  device = argv[0];
++  device = (char *) argv[0];
+ /*
+  * Open the new PGPLOT device.
+  */
+@@ -550,7 +555,7 @@ static int pgdemo_save_command(Pgdemo *d
+  *                                    the error message.
+  */
+ static int pgdemo_function_command(Pgdemo *demo, Tcl_Interp *interp, int argc,
+-				   char *argv[])
++				   const char *argv[])
+ {
+   char *function; /* The name of the display function */
+   int i;
+@@ -565,7 +570,7 @@ static int pgdemo_function_command(Pgdem
+ /*
+  * Get the function specification.
+  */
+-  function = argv[0];
++  function = (char *) argv[0];
+ /*
+  * Look up the function in the table that associates function names
+  * with the C functions that implement them.
+@@ -599,7 +604,7 @@ static int pgdemo_function_command(Pgdem
+  *                                    the error message.
+  */
+ static int pgdemo_slice_command(Pgdemo *demo, Tcl_Interp *interp, int argc,
+-				char *argv[])
++				const char *argv[])
+ {
+   Vertex va;  /* The coordinates of one end of the slice */
+   Vertex vb;  /* The coordinates of the other end of the slice */
+@@ -648,7 +653,7 @@ static int pgdemo_slice_command(Pgdemo *
+  *                                    the error message.
+  */
+ static int pgdemo_redraw_slice_command(Pgdemo *demo, Tcl_Interp *interp,
+-				       int argc, char *argv[])
++				       int argc, const char *argv[])
+ {
+   if(argc > 0) {
+     Tcl_AppendResult(interp, "'pgdemo redraw_slice' takes no arguments.", NULL);
+@@ -685,7 +690,7 @@ static int pgdemo_redraw_slice_command(P
+  *                                    the error message.
+  */
+ static int pgdemo_recolor_image_command(Pgdemo *demo, Tcl_Interp *interp,
+-					int argc, char *argv[])
++					int argc, const char *argv[])
+ {
+   char *name;   /* The name of the desired color table */
+   int i;
+@@ -699,7 +704,7 @@ static int pgdemo_recolor_image_command(
+ /*
+  * Get the color-table name.
+  */
+-  name = argv[0];
++  name = (char *) argv[0];
+ /*
+  * Look up the name in our list of supported color tables.
+  */
+diff -up ./pgplot/drivers/xtk/tkpgplot.c.orig ./pgplot/drivers/xtk/tkpgplot.c
+--- ./pgplot/drivers/xtk/tkpgplot.c.orig	2024-11-20 13:25:33.000000000 -0500
++++ ./pgplot/drivers/xtk/tkpgplot.c	2024-11-20 13:32:58.376983647 -0500
+@@ -162,7 +162,7 @@ struct TkPgplot {
+ };
+ 
+ static TkPgplot *new_TkPgplot(Tcl_Interp *interp, Tk_Window main_w, char *name,
+-			      int argc, char *argv[]);
++			      int argc, const char *argv[]);
+ static TkPgplot *del_TkPgplot(TkPgplot *tkpg);
+ 
+ 
+@@ -290,14 +290,14 @@ static void tkpg_update_clip(TkPgplot *t
+ static void tkpg_update_border(TkPgplot *tkpg);
+ 
+ static int PgplotCmd(ClientData context, Tcl_Interp *interp, int argc,
+-		     char *argv[]);
++		     const char *argv[]);
+ 
+ static int tkpg_InstanceCommand(ClientData context, Tcl_Interp *interp,
+-				int argc, char *argv[]);
++				int argc, const char *argv[]);
+ static int tkpg_InstanceCommand_return(ClientData context, int iret);
+ 
+ static int tkpg_Configure(TkPgplot *tkpg, Tcl_Interp *interp,
+-			  int argc, char *argv[], int flags);
++			  int argc, const char *argv[], int flags);
+ static void tkpg_expose_handler(TkPgplot *tkpg, XEvent *event);
+ static void tkpg_draw_focus_highlight(TkPgplot *tkpg);
+ static void tkpg_draw_3d_border(TkPgplot *tkpg);
+@@ -334,21 +334,21 @@ static void tkpg_FreeProc(char *context)
+ 
+ static int tkpg_scrollbar_callback(TkPgplot *tkpg, Tcl_Interp *interp, 
+ 				   char *widget, char *view, int argc,
+-				   char *argv[]);
++				   const char *argv[]);
+ static int tkpg_scrollbar_error(TkPgplot *tkpg, Tcl_Interp *interp, 
+ 				char *widget, char *view, int argc,
+-				char *argv[]);
++				const char *argv[]);
+ 
+ static int tkpg_tcl_setcursor(TkPgplot *tkpg, Tcl_Interp *interp,
+-			      int argc, char *argv[]);
++			      int argc, const char *argv[]);
+ static int tkpg_tcl_world(TkPgplot *tkpg, Tcl_Interp *interp, 
+-			  char *widget, int argc, char *argv[]);
++			  char *widget, int argc, const char *argv[]);
+ static int tkpg_tcl_pixel(TkPgplot *tkpg, Tcl_Interp *interp, 
+-			  char *widget, int argc, char *argv[]);
++			  char *widget, int argc, const char *argv[]);
+ static int tkpg_tcl_id(TkPgplot *tkpg, Tcl_Interp *interp, 
+-		       char *widget, int argc, char *argv[]);
++		       char *widget, int argc, const char *argv[]);
+ static int tkpg_tcl_device(TkPgplot *tkpg, Tcl_Interp *interp, 
+-			   char *widget, int argc, char *argv[]);
++			   char *widget, int argc, const char *argv[]);
+ 
+ #ifdef RIVET
+ static void del_RvPgplot(ClientData obj);
+@@ -449,7 +449,7 @@ int Tkpgplot_Init(Tcl_Interp *interp)
+  *                          TCL_ERROR - Failure.
+  */
+ static int PgplotCmd(ClientData context, Tcl_Interp *interp, int argc,
+-		     char *argv[])
++		    const char *argv[])
+ {
+   Tk_Window main_tkw = (Tk_Window)context; /* The application main window */
+   TkPgplot *tkpg;                          /* The new widget instance object */
+@@ -464,7 +464,7 @@ static int PgplotCmd(ClientData context,
+ /*
+  * Allocate the widget-instance object.
+  */
+-  tkpg = new_TkPgplot(interp, main_tkw, argv[1], argc-2, argv+2);
++  tkpg = new_TkPgplot(interp, main_tkw, (char *)argv[1], argc-2, argv+2);
+   if(!tkpg)
+     return TCL_ERROR;
+   return TCL_OK;
+@@ -486,7 +486,7 @@ static int PgplotCmd(ClientData context,
+  *                         field of the interpreter.
+  */
+ static TkPgplot *new_TkPgplot(Tcl_Interp *interp, Tk_Window main_w, char *name,
+-			      int argc, char *argv[])
++			      int argc, const char *argv[])
+ {
+   TkPgplot *tkpg;  /* The new widget object */
+   PgxWin *pgx;     /* The PGPLOT X window object of the widget */
+@@ -1437,7 +1437,7 @@ void DRIV(ifunc, rbuf, nbuf, chr, lchr,
+  *                          TCL_ERROR - Failure.
+  */
+ static int tkpg_InstanceCommand(ClientData context, Tcl_Interp *interp,
+-			       int argc, char *argv[])
++			       int argc, const char *argv[])
+ {
+   TkPgplot *tkpg = (TkPgplot *) context;
+   char *widget;     /* The name of the widget */
+@@ -1445,7 +1445,7 @@ static int tkpg_InstanceCommand(ClientDa
+ /*
+  * Get the name of the widget.
+  */
+-  widget = argv[0];
++  widget = (char *)argv[0];
+ /*
+  * Get the name of the command.
+  */
+@@ -1454,7 +1454,7 @@ static int tkpg_InstanceCommand(ClientDa
+ 		     NULL);
+     return TCL_ERROR;
+   };
+-  command = argv[1];
++  command = (char *)argv[1];
+ /*
+  * Prevent untimely deletion of the widget while this function runs.
+  * Note that following this statement you must return via
+@@ -1570,7 +1570,7 @@ static int tkpg_InstanceCommand_return(C
+  *                          TCL_ERROR - Failure.
+  */
+ static int tkpg_Configure(TkPgplot *tkpg, Tcl_Interp *interp,
+-			  int argc, char *argv[], int flags)
++			  int argc, const char *argv[], int flags)
+ {
+ /*
+  * Get the X-window pgplot object.
+@@ -1901,7 +1901,7 @@ static void tkpg_ClrCursor(TkPgplot *tkp
+  *                          TCL_ERROR - Failure.
+  */
+ static int tkpg_tcl_setcursor(TkPgplot *tkpg, Tcl_Interp *interp,
+-			      int argc, char *argv[])
++			      int argc, const char *argv[])
+ {
+   TkpgCursorMode mode;  /* Cursor augmentation mode */
+   double xref,yref;    /* The X and Y reference positions of the cursor */
+@@ -2139,7 +2139,7 @@ static void tkpg_update_border(TkPgplot
+     tkpg->border = bd;
+     tkpg_draw_3d_border(tkpg);
+   } else {
+-    fprintf(stderr, "Tk_Get3DBorder failed: %s\n", tkpg->interp->result);
++    fprintf(stderr, "Tk_Get3DBorder failed: %s\n", Tcl_GetStringResult(tkpg->interp));
+   };
+ }
+ 
+@@ -2159,7 +2159,7 @@ static void tkpg_update_border(TkPgplot
+  */
+ static int tkpg_scrollbar_callback(TkPgplot *tkpg, Tcl_Interp *interp, 
+ 				  char *widget, char *view, int argc,
+-				  char *argv[])
++				  const char *argv[])
+ {
+   int window_size;  /* The size of the window along the direction of motion */
+   int pixmap_size;  /* The size of the pixmap along the direction of motion */
+@@ -2268,7 +2268,7 @@ static int tkpg_scrollbar_callback(TkPgp
+  */
+ static int tkpg_scrollbar_error(TkPgplot *tkpg, Tcl_Interp *interp, 
+ 			       char *widget, char *view, int argc,
+-			       char *argv[])
++			       const char *argv[])
+ {
+   int i;
+   Tcl_AppendResult(interp, "Bad command: ", widget, " ", view, NULL);
+@@ -2305,7 +2305,7 @@ static int tkpg_scrollbar_error(TkPgplot
+  *                          TCL_ERROR - Failure.
+  */
+ static int tkpg_tcl_world(TkPgplot *tkpg, Tcl_Interp *interp, 
+-			 char *widget, int argc, char *argv[])
++			 char *widget, int argc, const char *argv[])
+ {
+   int xpix, ypix;     /* The input X window coordinate */
+   float rbuf[2];      /* The conversion buffer */
+@@ -2323,7 +2323,7 @@ static int tkpg_tcl_world(TkPgplot *tkpg
+ /*
+  * Decode the axis type and check the expected argument count.
+  */
+-  axis = argv[0];
++  axis = (char *)argv[0];
+   axtype = BAD_AXIS;
+   switch(*axis++) {
+   case 'x':
+@@ -2423,7 +2423,7 @@ static int tkpg_tcl_world(TkPgplot *tkpg
+  *                          TCL_ERROR - Failure.
+  */
+ static int tkpg_tcl_pixel(TkPgplot *tkpg, Tcl_Interp *interp, 
+-			 char *widget, int argc, char *argv[])
++			 char *widget, int argc, const char *argv[])
+ {
+   double wx, wy;      /* The world X and Y coordinates to be converted */
+   int xpix, ypix;     /* The output X window coordinate */
+@@ -2442,7 +2442,7 @@ static int tkpg_tcl_pixel(TkPgplot *tkpg
+ /*
+  * Decode the axis type and check the expected argument count.
+  */
+-  axis = argv[0];
++  axis = (char *) argv[0];
+   axtype = BAD_AXIS;
+   switch(*axis++) {
+   case 'x':
+@@ -2531,7 +2531,7 @@ static int tkpg_tcl_pixel(TkPgplot *tkpg
+  *                          TCL_ERROR - Failure.
+  */
+ static int tkpg_tcl_id(TkPgplot *tkpg, Tcl_Interp *interp, 
+-		      char *widget, int argc, char *argv[])
++		      char *widget, int argc, const char *argv[])
+ {
+ /*
+  * There shouldn't be any arguments.
+@@ -2563,7 +2563,7 @@ static int tkpg_tcl_id(TkPgplot *tkpg, T
+  *                          TCL_ERROR - Failure.
+  */
+ static int tkpg_tcl_device(TkPgplot *tkpg, Tcl_Interp *interp, 
+-			   char *widget, int argc, char *argv[])
++			   char *widget, int argc, const char *argv[])
+ {
+ /*
+  * There shouldn't be any arguments.
+diff -up ./pgplot/drivers/xwdriv.c.orig ./pgplot/drivers/xwdriv.c
+--- ./pgplot/drivers/xwdriv.c.orig	2024-11-20 13:25:33.000000000 -0500
++++ ./pgplot/drivers/xwdriv.c	2024-11-20 13:32:58.381983632 -0500
+@@ -3391,7 +3391,10 @@ static Window xw_get_server(xw)
+ /*
+  * Run the server.
+  */
+-      system(command);
++      {
++        int ignore;
++        ignore = system(command);
++      }
+ #endif
+     };
+ /*
+@@ -4157,7 +4160,7 @@ static char *find_exe(path, program)
+ 	fprintf(stderr, "%s: Insufficient memory to locate program: %s\n",
+ 		XW_IDENT, program);
+ 	free(buf);
+-	return buf;
++	return NULL;
+       };
+       buf = new_buf;
+     };
+diff -up ./pgplot/examples/pgdemo13.f.orig ./pgplot/examples/pgdemo13.f
+--- ./pgplot/examples/pgdemo13.f.orig	2024-11-20 13:25:33.000000000 -0500
++++ ./pgplot/examples/pgdemo13.f	2024-11-20 13:32:58.385983619 -0500
+@@ -1119,7 +1119,7 @@ C---------------------------------------
+       PARAMETER (IM=2147483647)
+       PARAMETER (IA=16807, IQ=127773, IR= 2836)
+       REAL      AM
+-      PARAMETER (AM=128.0/IM)
++      PARAMETER (AM=128.0/REAL(IM))
+       INTEGER   K
+ C-
+       K = ISEED/IQ
+diff -up ./pgplot/examples/pgdemo1.f.orig ./pgplot/examples/pgdemo1.f
+--- ./pgplot/examples/pgdemo1.f.orig	2024-11-20 13:25:33.000000000 -0500
++++ ./pgplot/examples/pgdemo1.f	2024-11-20 13:32:58.385983619 -0500
+@@ -1032,7 +1032,7 @@ C---------------------------------------
+       PARAMETER (IM=2147483647)
+       PARAMETER (IA=16807, IQ=127773, IR= 2836)
+       REAL      AM
+-      PARAMETER (AM=128.0/IM)
++      PARAMETER (AM=128.0/REAL(IM))
+       INTEGER   K
+ C-
+       K = ISEED/IQ
+diff -up ./pgplot/examples/pgdemo3.f.orig ./pgplot/examples/pgdemo3.f
+--- ./pgplot/examples/pgdemo3.f.orig	2024-11-20 13:25:33.000000000 -0500
++++ ./pgplot/examples/pgdemo3.f	2024-11-20 13:32:58.386983616 -0500
+@@ -352,10 +352,10 @@ C---------------------------------------
+       REAL RA, RRA, DEC, RDEC, CDEC, R(3,3), E(3), G(3)
+       REAL RADDEG, GLAT, GLONG
+       INTEGER I, J
+-      DATA R/-.066988740D0, .492728466D0,-.867600811D0,-.872755766D0,
+-     $       -.450346958D0,-.188374601D0,-.483538915D0, .744584633D0,
+-     $        .460199785D0/
+-      DATA RADDEG/57.29577951D0/
++      DATA R/-.066988740E0, .492728466E0,-.867600811E0,-.872755766E0,
++     $       -.450346958E0,-.188374601E0,-.483538915E0, .744584633E0,
++     $        .460199785E0/
++      DATA RADDEG/57.29577951E0/
+ C-----------------------------------------------------------------------
+       RRA = RA
+       RDEC = DEC
+diff -up ./pgplot/examples/pgdemo9.f.orig ./pgplot/examples/pgdemo9.f
+--- ./pgplot/examples/pgdemo9.f.orig	2024-11-20 13:25:33.000000000 -0500
++++ ./pgplot/examples/pgdemo9.f	2024-11-20 13:32:58.386983616 -0500
+@@ -11,8 +11,8 @@ C---------------------------------------
+ C
+ C Compute a suitable function.
+ C
+-      FMIN = F(1,1)
+-      FMAX = F(1,1)
++      FMIN = -1000
++      FMAX = +1000
+       DO 20 I=1,N
+           DO 10 J=1,N
+               F(I,J) = COS(0.6*SQRT(I*2.)-0.4*J/3.)*COS(0.4*I/3)+
+@@ -23,7 +23,7 @@ C
+    20 CONTINUE
+       DO 25 I=1,N
+           DO 24 J=1,N
+-              IA(I,J) = (F(I,J)-FMIN)/(FMAX-FMIN)*(NCOL-1)+16
++              IA(I,J) = INT((F(I,J)-FMIN)/(FMAX-FMIN)*(NCOL-1)+16)
+    24     CONTINUE
+    25 CONTINUE
+ C
+diff -up ./pgplot/fonts/pgpack.f.orig ./pgplot/fonts/pgpack.f
+--- ./pgplot/fonts/pgpack.f.orig	2024-11-20 13:25:33.000000000 -0500
++++ ./pgplot/fonts/pgpack.f	2024-11-20 13:32:58.389983607 -0500
+@@ -29,6 +29,7 @@ C New characters cannot be added if they
+ C the arrays.  Array INDEX is not very efficiently used as only about
+ C 1000 of the possible 3000 characters are defined.
+ C-----------------------------------------------------------------------
++      USE ISO_FORTRAN_ENV
+       INTEGER MAXCHR, MAXBUF
+       PARAMETER (MAXCHR=3000)
+       PARAMETER (MAXBUF=27000)
+@@ -67,11 +68,12 @@ C         -- store in index and buffer
+           LOC = LOC+1
+           IF (LOC.GT.MAXBUF) GOTO 500
+           INDEX(NC) = LOC
+-          BUFFER(LOC) = XYGRID(1)
++          BUFFER(LOC) = INT(IAND(XYGRID(1),Z'FFFF'),KIND=INT16)
+           DO 15 I=2,LENGTH,2
+               LOC = LOC + 1
+               IF (LOC.GT.MAXBUF) GOTO 500
+-              BUFFER(LOC) = 128*(XYGRID(I)+64) + XYGRID(I+1) + 64
++              BUFFER(LOC) = INT(IAND(128*(XYGRID(I)+64) +
++     +             XYGRID(I+1) + 64,Z'FFFF'),KIND=INT16)
+    15     CONTINUE
+       GOTO 10
+    20 CONTINUE
+diff -up ./pgplot/src/grcurs.f.orig ./pgplot/src/grcurs.f
+--- ./pgplot/src/grcurs.f.orig	2024-11-20 13:25:33.000000000 -0500
++++ ./pgplot/src/grcurs.f	2024-11-20 13:32:58.386983616 -0500
+@@ -93,8 +93,8 @@ C         -- position cursor?
+           NBUF = 6
+           LCHR = 0
+           CALL GREXEC(GRGTYP,17,RBUF,NBUF,CHR,LCHR)
+-          IX = RBUF(1)
+-          IY = RBUF(2)
++          IX = INT(RBUF(1))
++          IY = INT(RBUF(2))
+           CH = CHR(1:1)
+           GRCURS = 1
+ C         -- error if driver returns NUL
+diff -up ./pgplot/src/grgfil.f.orig ./pgplot/src/grgfil.f
+--- ./pgplot/src/grgfil.f.orig	2024-11-20 13:25:33.000000000 -0500
++++ ./pgplot/src/grgfil.f	2024-11-20 13:32:58.382983629 -0500
+@@ -33,6 +33,7 @@ C---------------------------------------
+       CHARACTER*16 DEFLT
+       INTEGER I, L, LD
+       LOGICAL TEST, DEBUG
++      DATA LD/0/
+ C
+ C Is debug output requested?
+ C
+diff -up ./pgplot/src/grimg3.f.orig ./pgplot/src/grimg3.f
+--- ./pgplot/src/grimg3.f.orig	2024-11-20 13:25:33.000000000 -0500
++++ ./pgplot/src/grimg3.f	2024-11-20 13:32:58.382983629 -0500
+@@ -18,6 +18,7 @@ C---------------------------------------
+       PARAMETER (M=714025, IAA=1366, ICC=150889, RM=1.0/M)
+       PARAMETER (FAC=65000.0)
+       INTRINSIC MOD, NINT, REAL, LOG
++      DATA VALUE /0./
+ C-----------------------------------------------------------------------
+ C
+       IF (MODE.LT.0 .OR. MODE.GT.2) RETURN
+diff -up ./pgplot/src/gropen.f.orig ./pgplot/src/gropen.f
+--- ./pgplot/src/gropen.f.orig	2024-11-20 13:25:33.000000000 -0500
++++ ./pgplot/src/gropen.f	2024-11-20 13:32:58.386983616 -0500
+@@ -103,13 +103,13 @@ C
+       IF (APPEND) RBUF(3)=1
+       NBUF=3
+       CALL GREXEC(GRGTYP, 9,RBUF,NBUF, GRFILE(IDENT),GRFNLN(IDENT))
+-      GROPEN=RBUF(2)
++      GROPEN=INT(RBUF(2))
+       IF (GROPEN.NE.1) THEN
+          IDENT = 0
+          RETURN
+       END IF
+       GRGTYP = GRTYPE(IDENT)
+-      GRUNIT(IDENT)=RBUF(1)
++      GRUNIT(IDENT)=INT(RBUF(1))
+       GRPLTD(IDENT) = .FALSE.
+       GRSTAT(IDENT) = 1
+       CALL GRSLCT(IDENT)
+@@ -118,8 +118,8 @@ C Install the default plot parameters
+ C
+ C--- Inquire color-index range.
+       CALL GREXEC(GRGTYP, 2,RBUF,NBUF,CHR,LCHR)
+-      GRMNCI(IDENT)=RBUF(5)
+-      GRMXCI(IDENT)=RBUF(6)
++      GRMNCI(IDENT)=INT(RBUF(5))
++      GRMXCI(IDENT)=INT(RBUF(6))
+ C--- Inquire resolution.
+       CALL GREXEC(GRGTYP, 3,RBUF,NBUF,CHR,LCHR)
+       GRPXPI(IDENT)=RBUF(1)
+@@ -130,8 +130,8 @@ C--- Inquire default character size.
+       GRCFAC(IDENT) = RBUF(1)
+ C--- Inquire default plot size.
+       CALL GREXEC(GRGTYP, 6,RBUF,NBUF,CHR,LCHR)
+-      GRXMXA(IDENT) = RBUF(2)
+-      GRYMXA(IDENT) = RBUF(4)
++      GRXMXA(IDENT) = INT(RBUF(2))
++      GRYMXA(IDENT) = INT(RBUF(4))
+       GRXMIN(IDENT) = RBUF(1)
+       GRXMAX(IDENT) = RBUF(2)
+       GRYMIN(IDENT) = RBUF(3)
+diff -up ./pgplot/src/grpage.f.orig ./pgplot/src/grpage.f
+--- ./pgplot/src/grpage.f.orig	2024-11-20 13:25:33.000000000 -0500
++++ ./pgplot/src/grpage.f	2024-11-20 13:32:58.387983613 -0500
+@@ -48,8 +48,8 @@ C devices)
+ C
+       IF (.NOT.GRADJU(GRCIDE)) THEN
+           CALL GREXEC(GRGTYP, 6,RBUF,NBUF,CHR,LCHR)
+-          GRXMXA(GRCIDE) = RBUF(2)
+-          GRYMXA(GRCIDE) = RBUF(4)
++          GRXMXA(GRCIDE) = INT(RBUF(2))
++          GRYMXA(GRCIDE) = INT(RBUF(4))
+       END IF
+ C
+       END
+diff -up ./pgplot/src/grpixl.f.orig ./pgplot/src/grpixl.f
+--- ./pgplot/src/grpixl.f.orig	2024-11-20 13:25:33.000000000 -0500
++++ ./pgplot/src/grpixl.f	2024-11-20 13:32:58.387983613 -0500
+@@ -64,7 +64,7 @@ C
+       XPIX = XMAX - XMIN
+       YPIX = YMAX - YMIN
+       IF (XMIN .LT. GRXMIN(GRCIDE)) THEN
+-         IL = I1 + (GRXMIN(GRCIDE) - XMIN) * (I2 - I1 + 1) / XPIX
++         IL = I1 + INT((GRXMIN(GRCIDE) - XMIN) * (I2 - I1 + 1)/XPIX)
+          XMIN = XMIN + (XPIX * (IL - I1)) / (I2 - I1 + 1)
+       ELSE
+          IL = I1
+@@ -73,7 +73,7 @@ C
+ C Don't paint "pixels" completely after right clipping boundary
+ C
+       IF (GRXMAX(GRCIDE) .LT. XMAX) THEN
+-         IR = I2 - (XMAX - GRXMAX(GRCIDE)) * (I2 - I1 + 1) / XPIX + 1
++         IR = I2 - INT((XMAX - GRXMAX(GRCIDE)) * (I2-I1+1)/XPIX) + 1
+          XMAX = XMIN + (XPIX * (IR - I1 + 1)) /
+      1                 (I2 - I1 + 1)
+       ELSE
+@@ -83,7 +83,7 @@ C
+ C Don't paint "pixels" completely under bottom clipping boundary
+ C
+       IF (YMIN .LT. GRYMIN(GRCIDE)) THEN
+-         JB = J1 + (GRYMIN(GRCIDE) - YMIN) * (J2 - J1 + 1) / YPIX
++         JB = J1 + INT((GRYMIN(GRCIDE) - YMIN) * (J2 - J1 + 1)/YPIX)
+          YMIN = YMIN + (YPIX * (JB - J1)) / (J2 - J1 + 1)
+       ELSE
+          JB = J1
+@@ -92,7 +92,7 @@ C
+ C Don't paint "pixels" completely above top clipping boundary
+ C
+       IF (GRYMAX(GRCIDE) .LT. YMAX) THEN
+-         JT = J2 - (YMAX - GRYMAX(GRCIDE)) * (J2 - J1 + 1) / YPIX + 1
++         JT = J2 -INT((YMAX - GRYMAX(GRCIDE)) * (J2 - J1 + 1)/YPIX) + 1
+          YMAX = YMIN + (YPIX * (JT - J1 + 1)) /
+      1                 (J2 - J1 + 1)
+       ELSE
+@@ -103,7 +103,7 @@ C If device accepts image primitives, us
+ C
+       IF (GRGCAP(GRCIDE)(7:7).EQ.'Q') THEN
+          CALL GRPXPS(IA, IDIM, JDIM, IL, IR, JB, JT,
+-     1		     XMIN,XMAX,YMIN,YMAX)
++     1        XMIN,XMAX,YMIN,YMAX)
+          RETURN
+       ENDIF
+ C
+@@ -119,10 +119,10 @@ C
+ C Use rectangles if "pixel" is too large
+ C
+       IF (XPIX .GT. XSIZE + 0.5 * WIDTH .OR.
+-     1    YPIX .GT. YSIZE + 0.5 * WIDTH) THEN
++     1     YPIX .GT. YSIZE + 0.5 * WIDTH) THEN
+ *     write (6,*) 'GRPXRE'
+          CALL GRPXRE(IA, IDIM, JDIM, IL, IR, JB, JT,
+-     1		     XMIN, XMAX, YMIN, YMAX)
++     1        XMIN, XMAX, YMIN, YMAX)
+ C
+ C Use either pixel primitives or points
+ C
+@@ -167,7 +167,7 @@ C
+          ELSE
+ *     write (6,*) 'GRPXPO'
+             CALL GRPXPO(IA, IDIM, JDIM, IL, IR, JB, JT,
+-     1		     XMIN, XMAX, YMIN, YMAX)
++     1           XMIN, XMAX, YMIN, YMAX)
+          ENDIF
+       ENDIF
+       END
+diff -up ./pgplot/src/grpocl.f.orig ./pgplot/src/grpocl.f
+--- ./pgplot/src/grpocl.f.orig	2024-11-20 13:25:33.000000000 -0500
++++ ./pgplot/src/grpocl.f	2024-11-20 13:32:58.382983629 -0500
+@@ -34,6 +34,7 @@ C               on edge [Remko Scharroo]
+ C-----------------------------------------------------------------------
+       INTEGER I
+       REAL FX, FY, SX, SY
++      DATA FX, FY, SX, SY /0., 0., 0., 0./
+ C
+       NOUT = 0
+       DO 100 I=1,N
+diff -up ./pgplot/src/grrec0.f.orig ./pgplot/src/grrec0.f
+--- ./pgplot/src/grrec0.f.orig	2024-11-20 13:25:33.000000000 -0500
++++ ./pgplot/src/grrec0.f	2024-11-20 13:32:58.387983613 -0500
+@@ -87,7 +87,7 @@ C
+ C
+ C Draw horizontal raster lines.
+ C
+-      NLINES = ABS((YMAX-YMIN)/DY)
++      NLINES = INT(ABS((YMAX-YMIN)/DY))
+       Y = YMIN - DY/2.0
+       DO 40 I=1,NLINES
+          Y = Y + DY
+diff -up ./pgplot/src/grsets.f.orig ./pgplot/src/grsets.f
+--- ./pgplot/src/grsets.f.orig	2024-11-20 13:25:33.000000000 -0500
++++ ./pgplot/src/grsets.f	2024-11-20 13:32:58.387983613 -0500
+@@ -31,14 +31,14 @@ C     write (*,*) 'GRSETS: old size', GR
+       CALL GRPAGE
+       IF ((XSIZE .LT. 0.0) .OR. (YSIZE .LT. 0.0)) THEN
+           CALL GREXEC(GRGTYP, 6,RBUF,NBUF,CHR,LCHR)
+-          GRXMXA(IDENT) = RBUF(2)
+-          GRYMXA(IDENT) = RBUF(4)
++          GRXMXA(IDENT) = INT(RBUF(2))
++          GRYMXA(IDENT) = INT(RBUF(4))
+       ELSE
+           I = NINT(XSIZE)
+           J = NINT(YSIZE)
+           CALL GREXEC(GRGTYP, 2,RBUF,NBUF,CHR,LCHR)
+-          IX=RBUF(2)
+-          IY=RBUF(4)
++          IX=INT(RBUF(2))
++          IY=INT(RBUF(4))
+           IF (IX.GT.0) I = MIN(I,IX)
+           IF (IY.GT.0) J = MIN(J,IY)
+           GRXMXA(IDENT) = I
+diff -up ./pgplot/src/pgaxis.f.orig ./pgplot/src/pgaxis.f
+--- ./pgplot/src/pgaxis.f.orig	2024-11-20 13:25:33.000000000 -0500
++++ ./pgplot/src/pgaxis.f	2024-11-20 13:32:58.382983629 -0500
+@@ -61,7 +61,7 @@ C  FMIN   (input)  : length of minor tic
+ C  DISP   (input)  : displacement of baseline of tick labels to
+ C                    right of axis, in units of the character height.
+ C  ORIENT (input)  : orientation of label text, in degrees; angle between
+-C                    baseline of text and direction of axis (0-360°).
++C                    baseline of text and direction of axis (0-360deg).
+ C--
+ C 25-Mar-1997 - new routine [TJP].
+ C-----------------------------------------------------------------------
+diff -up ./pgplot/src/pgaxlg.f.orig ./pgplot/src/pgaxlg.f
+--- ./pgplot/src/pgaxlg.f.orig	2024-11-20 13:25:33.000000000 -0500
++++ ./pgplot/src/pgaxlg.f	2024-11-20 13:32:58.387983613 -0500
+@@ -82,7 +82,7 @@ C
+          IF (DVMAJ.LT.1.0) DVMAJ = 1.0
+       END IF
+       DVMIN = 1.0
+-      NSUBT = DVMAJ/DVMIN
++      NSUBT = INT(DVMAJ/DVMIN)
+ C
+       CALL PGBBUF
+       CALL PGQCLP(CLIP)
+diff -up ./pgplot/src/pgconb.f.orig ./pgplot/src/pgconb.f
+--- ./pgplot/src/pgconb.f.orig	2024-11-20 13:25:33.000000000 -0500
++++ ./pgplot/src/pgconb.f	2024-11-20 13:32:58.388983610 -0500
+@@ -57,7 +57,7 @@ C
+       IF (NC.EQ.0) RETURN
+       CALL PGBBUF
+ C
+-      DO 130 J=J1+1,J2
++      DO 135 J=J1+1,J2
+       DO 130 I=I1+1,I2
+           DVAL(1) = A(I-1,J)
+           DVAL(2) = A(I-1,J-1)
+@@ -135,7 +135,8 @@ C            taken to avoid going off th
+             END IF
+           END IF
+   110     CONTINUE
+-  130 CONTINUE
++ 130   CONTINUE
++ 135   CONTINUE
+ C
+       CALL PGEBUF
+       END
+diff -up ./pgplot/src/pgcons.f.orig ./pgplot/src/pgcons.f
+--- ./pgplot/src/pgcons.f.orig	2024-11-20 13:25:33.000000000 -0500
++++ ./pgplot/src/pgcons.f	2024-11-20 13:32:58.388983610 -0500
+@@ -60,7 +60,7 @@ C
+       IF (NC.EQ.0) RETURN
+       CALL PGBBUF
+ C
+-      DO 130 J=J1+1,J2
++      DO 135 J=J1+1,J2
+       DO 130 I=I1+1,I2
+           DVAL(1) = A(I-1,J)
+           DVAL(2) = A(I-1,J-1)
+@@ -135,7 +135,8 @@ C            taken to avoid going off th
+             END IF
+           END IF
+   110     CONTINUE
+-  130 CONTINUE
++ 130   CONTINUE
++ 135   CONTINUE
+ C
+       CALL PGEBUF
+       END
+diff -up ./pgplot/src/pghist.f.orig ./pgplot/src/pghist.f
+--- ./pgplot/src/pghist.f.orig	2024-11-20 13:25:33.000000000 -0500
++++ ./pgplot/src/pghist.f	2024-11-20 13:32:58.388983610 -0500
+@@ -66,7 +66,7 @@ C
+           NUM(IBIN) = 0
+    10 CONTINUE
+       DO 20 I=1,N
+-          IBIN = (DATA(I)-DATMIN)/(DATMAX-DATMIN)*NBIN+1
++          IBIN = INT((DATA(I)-DATMIN)/(DATMAX-DATMIN)*NBIN+1)
+           IF (IBIN.GE.1 .AND. IBIN.LE.NBIN) NUM(IBIN) = NUM(IBIN)+1
+    20 CONTINUE
+       NUMMAX = 0
+diff -up ./pgplot/src/pgrnd.f.orig ./pgplot/src/pgrnd.f
+--- ./pgplot/src/pgrnd.f.orig	2024-11-20 13:25:33.000000000 -0500
++++ ./pgplot/src/pgrnd.f	2024-11-20 13:32:58.389983607 -0500
+@@ -33,7 +33,7 @@ C
+       END IF
+       XX   = ABS(X)
+       XLOG = LOG10(XX)
+-      ILOG = XLOG
++      ILOG = INT(XLOG)
+       IF (XLOG.LT.0) ILOG=ILOG-1
+       PWR  = 10.0**ILOG
+       FRAC = XX/PWR
+diff -up ./pgplot/src/pgtbox.f.orig ./pgplot/src/pgtbox.f
+--- ./pgplot/src/pgtbox.f.orig	2024-11-20 13:25:33.000000000 -0500
++++ ./pgplot/src/pgtbox.f	2024-11-20 13:32:58.388983610 -0500
+@@ -764,7 +764,7 @@ C
+ C
+ C  Find first tick.  Return if none.
+ C
+-      NT = TMIN / TICK
++      NT = INT(TMIN / TICK)
+       IF (IS*SD.EQ.1 .AND. ABS(TMIN).GT.ABS(NT)*TICK) NT = NT + SD
+       TIME = NT * TICK
+       IF ( (SD.EQ. 1.AND.(TIME.LT.TMIN.OR.TIME.GT.TMAX)) .OR.
+diff -up ./pgplot/src/pgtick.f.orig ./pgplot/src/pgtick.f
+--- ./pgplot/src/pgtick.f.orig	2024-11-20 13:25:33.000000000 -0500
++++ ./pgplot/src/pgtick.f	2024-11-20 13:32:58.382983629 -0500
+@@ -27,7 +27,7 @@ C                    in units of the cha
+ C  DISP   (input)  : displacement of label text to
+ C                    right of axis, in units of the character height.
+ C  ORIENT (input)  : orientation of label text, in degrees; angle between
+-C                    baseline of text and direction of axis (0-360°).
++C                    baseline of text and direction of axis (0-360deg).
+ C  STR    (input)  : text of label (may be blank).
+ C--
+ C 25-Mar-1997 - new routine [TJP].
+diff -up ./pgplot/sys/grfileio.c.orig ./pgplot/sys/grfileio.c
+--- ./pgplot/sys/grfileio.c.orig	2024-11-20 13:25:33.000000000 -0500
++++ ./pgplot/sys/grfileio.c	2024-11-20 13:32:58.372983660 -0500
+@@ -16,10 +16,12 @@
+  *-------
+  */
+ 
++#include <unistd.h>
+ #include <stdlib.h>
+ #include <stdio.h>
+ #include <sys/types.h>
+ #include <fcntl.h>
++#include <string.h>
+ 
+ #ifdef PG_PPU
+ #define GROFIL grofil_
+diff -up ./pgplot/sys/grtermio.c.orig ./pgplot/sys/grtermio.c
+--- ./pgplot/sys/grtermio.c.orig	2024-11-20 13:25:33.000000000 -0500
++++ ./pgplot/sys/grtermio.c	2024-11-20 13:32:58.382983629 -0500
+@@ -5,8 +5,11 @@
+ /* Support routines for terminal I/O. This module defines the following
+    Fortran-callable routines: GROTER, GRCTER, GRWTER, GRPTER. */
+ 
++#include <unistd.h>
+ #include <stdio.h>
+ #include <termios.h>
++#include <fcntl.h>
++#include <string.h>
+ 
+ #ifdef PG_PPU
+ #define GROTER groter_
+@@ -122,7 +125,10 @@ void GRPTER(fd, cprom, lprom, cbuf, lbuf
+ /*
+  * Prompt for input.
+  */
+-     if(*lprom>0) write(*fd, cprom, *lprom);
++     if(*lprom>0) {
++       int ncw; /* stop warning */
++       ncw = write(*fd, cprom, *lprom);
++     }
+ /*
+  * Read up to 'ntry' characters from the terminal.
+  */
+diff -up ./pgplot/sys_linux/g77_gcc.conf.orig ./pgplot/sys_linux/g77_gcc.conf
+--- ./pgplot/sys_linux/g77_gcc.conf.orig	2024-11-20 13:25:33.000000000 -0500
++++ ./pgplot/sys_linux/g77_gcc.conf	2024-11-20 13:32:58.372983660 -0500
+@@ -108,7 +108,7 @@
+ # Optional: Needed if SHARED_LIB is set.
+ # How to create a shared library from a trailing list of object files.
+  
+-   SHARED_LD='$(CC) $(CFLAGS) -shared  -Wl,-soname,libpgplot.so.5 -o libpgplot.so.5.2.2 $(NLIBS)'
++   SHARED_LD='$(CC) $(CFLAGS) -shared  -Wl,-soname,libpgplot.so.5 -o $(SHARED_LIB) $(NLIBS)'
+ 
+ # Optional:
+ # On systems such as Solaris 2.x, that allow specification of the
