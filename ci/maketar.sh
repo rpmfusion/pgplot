@@ -95,7 +95,7 @@ do
     esac    
 done
 # like rpm %urlhelper to fetch source tar file
-curl --silent --show-error --fail --globoff --location -o $REMOTESRC $REMOTEURL  
+curl --silent --show-error --fail --globoff --location -o $REMOTESRC $REMOTEURL chmod a+rx . 
 
 
 ls -l .

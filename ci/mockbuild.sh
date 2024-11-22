@@ -27,6 +27,8 @@ BREL="${RELEASE}.alma%{?dist}"
 sed "/^Release:/c\
 Release:        ${BREL}" <${NAME}.spec.base >${NAME}.spec
 
+tar tvf ${TARFILE}
+
 config='alma+epel-8-x86_64'
 mock -v -r $config  \
      --additional-package=libpng-devel \
@@ -41,7 +43,7 @@ mock -v -r $config  \
      --resultdir=./outputs -N
 
 cp ${NAME}.spec.base ${NAME}.spec
-config='fedora-38-x86_64'
+config='fedora-40-x86_64'
 mock -v -r $config \
      --additional-package=libpng-devel \
      --additional-package=tk-devel \
