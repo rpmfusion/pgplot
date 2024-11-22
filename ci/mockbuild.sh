@@ -27,7 +27,8 @@ BREL="${RELEASE}.alma%{?dist}"
 sed "/^Release:/c\
 Release:        ${BREL}" <${NAME}.spec.base >${NAME}.spec
 
-tar tvf ${TARFILE}
+tar xvf ${TARFILE}
+SOURCES=${NAME}-${VERSION}
 
 config='alma+epel-8-x86_64'
 mock -v -r $config  \
@@ -39,7 +40,7 @@ mock -v -r $config  \
      --additional-package=glibc-common \
      --additional-package=openssl \
      --spec=${NAME}.spec \
-     --sources=${TARFILE} \
+     --sources=${SOURCES} \
      --resultdir=./outputs -N
 
 cp ${NAME}.spec.base ${NAME}.spec
@@ -53,7 +54,7 @@ mock -v -r $config \
      --additional-package=glibc-common \
      --additional-package=openssl \
      --spec=${NAME}.spec \
-     --sources=${TARFILE} \
+     --sources=${SOURCES} \
      --resultdir=./outputs -N
 
 ls -lR .
