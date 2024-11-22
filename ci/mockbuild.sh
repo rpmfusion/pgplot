@@ -3,7 +3,7 @@
 echo "running $0 $1"
 TARFILE=$1
 NAME=pgplot
-if test "x${TARFILE" = "x" ;
+if test "x${TARFILE}" = "x" ;
 then
     TARFILE=${NAME}.tar
 fi
@@ -53,6 +53,5 @@ mock -v -r $config \
      --spec=${NAME}.spec \
      --sources=${TARFILE} \
      --resultdir=./outputs -N
-
 
 ls -lR .
