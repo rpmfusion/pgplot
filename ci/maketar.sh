@@ -1,20 +1,31 @@
 #!/bin/sh
 # collect up all the "base" files into a tar file
-# exclude the stuff that gets created during a build
+# that is used to build an rpm
 
-# usage: maketar.sh [version] [release] [releasedate]
+# usage: maketar.sh tarfile [version] [release] [releasedate]
 
-# also makes a zip file
 
 name=pgplot
 startdir=$(pwd)
 me=$(realpath -e -L $0)
 distdir=$(dirname $me)
 basedir=$(realpath -e -L $distdir/..)
-#echo "distdir $distdir"
-#echo "basedir $basedir"
+echo "startdir $startdir"
+echo "distdir $distdir"
+echo "basedir $basedir"
 
-VERSION=$1
+echo "ls -l \$startdir"
+ls -l $startdir
+
+
+tarfile=$1
+if test "x$tarfile" = "x" ;
+then
+    tarfile=${name}.tar
+fi
+echo "tarfile: $tarfile"
+
+VERSION=$2
 CVER=$(awk '/^Version/ {print $2}' $basedir/${name}.spec)
 if test "x${VERSION}" = "x"  ;
 then
@@ -26,14 +37,14 @@ then
     exit 1
 fi
     
-RELEASE=$2
+RELEASE=$3
 if test "x${RELEASE}" = "x"  ;
 then
     RELEASE=$(awk '/^Release=/{print $2}' $basedir/${name}.spec | cut -d'%' -f1)
     echo "RELEASE ($RELEASE) from ${name}.spec"
 fi
 
-RELDATE=$3
+RELDATE=$4
 if test "x${RELDATE}" = "x"  ;
 then
     RELDATE=$(date -I)
@@ -42,45 +53,52 @@ fi
 
 echo "Version $VERSION Release $RELEASE Date $RELDATE"
 
-tdir=$(mktemp -p "/tmp" -d "${name}DIST_XXXXXXXX")
-#echo "tempdir $tdir"
-cd $tdir
+tmpdir=$(mktemp -p "/tmp" -d "${name}DIST_XXXXXXXX")
+echo "tmpdir $tmpdir"
+if test ! -e "$tmpdir" ;
+then
+    echo "failed to create $tmpdir"
+    exit 1
+fi
+cd $tmpdir
 
 #directory for dist
-nv=${name}-${VERSION}
-mkdir ${nv}}
+tardir=$(basename "$tarfile" .tar) 
+mkdir ${tardir}
+cd ${tardir}
 
 #populate with symbolic links from main code directory
-cd ${nv}
 
 for f in $basedir/* ; 
 do
     fn=$(basename $f)
     case "$fn" in
         *.pc)
-            cp $f .
+            cp $f ./$fn
             sed -i "s/@VERSION@/${VERSION}/" $fn
             sed -i "s/@RELEASE@/${RELEASE}/" $fn
             sed -i "s/@RELDATE@/${RELDATE}/" $fn
+            echo "edit $fn"
+            ;;
+        ${name}.spec | ci)
+            continue
             ;;
         *)
             ln -s $f .
+            echo "ln -s $f ."
             ;;
     esac    
 done
+ls -l .
 
 cd ..
 
-#GNU makefile 'dist' guideline is that files in the archive
-#should have world rx permissions
-chmod 0755 -R ${nv}
 
 #make the tar archive, rereferencing symbolic links
-tar chzf ${nv}.tgz -X dist.exclude --exclude-backups ${nv}
-mv ${nv}.tgz $distdir
+tar chf ${tarfile} --exclude-backups ${tardir}
+mv ${tarfile} $distdir
+ls -l $distdir
 
-zip -r -q ${nv}.zip  ${nv}/ -x\*~ -x\*\# -x\@dist.exclude
-mv ${nv}.zip $distdir
 cd $startdir
 # clean up temp directory
 rm -rf $tdir

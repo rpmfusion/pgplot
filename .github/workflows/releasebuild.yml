@@ -13,7 +13,7 @@ on:
 
 jobs:
   distbuild:
-    name: Checkout code and build tgz
+    name: Checkout code and build tar
     runs-on: ubuntu-latest
     steps:
       - name: Set the version
@@ -33,8 +33,8 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Build tar.gz
-        run: ci/maketar.sh ${{ env.VERSION }} ${{ env.RELEASE }} ${{ env.RELDATE }} 
+      - name: Build tar
+        run: ci/maketar.sh build.tar ${{ env.VERSION }} ${{ env.RELEASE }} ${{ env.RELDATE }} 
 
       - name: Upload mock script
         uses: actions/upload-artifact@v4
@@ -42,23 +42,18 @@ jobs:
           name: mockbuild.sh 
           path: ci/mockbuild.sh 
 
-      - name: Upload tar.gz
+      - name: Upload tar
         uses: actions/upload-artifact@v4
         with:
-          name: pgplot-${{ env.VERSION }}.tgz
-          path: ci/pgplot-${{ env.VERSION }}.tgz
+          name: build.tar
+          path: build.tar
 
-      - name: Upload spec file
+      - name: upload spec file
         uses: actions/upload-artifact@v4
         with:
           name: pgplot.spec
           path: pgplot.spec
 
-      - name: Upload zip
-        uses: actions/upload-artifact@v4
-        with:
-          name: pgplot-${{ env.VERSION }}.zip
-          path: ci/pgplot-${{ env.VERSION }}.zip
 
   rpmbuild:
       name: Build using Rocky Linux
@@ -80,31 +75,21 @@ jobs:
           with:
             name: mockbuild.sh
 
-        - name: Download tgz
+        - name: Download tar
           uses: actions/download-artifact@v4
           with:
-            name: pgplot-${{ env.VERSION }}.tgz
+            name: build.tar
 
-        - name: Download spec
+        - name: Download spec file
           uses: actions/download-artifact@v4
           with:
             name: pgplot.spec
-
-        - name: Download zip
-          uses: actions/download-artifact@v4
-          with:
-            name: pgplot-${{ env.VERSION }}.zip
 
         - name: Set execute bit
           run: chmod +x mockbuild.sh
 
         - name: Run rpm build script
-          run: ./mockbuild.sh  ${{ env.VERSION }}
-
-        - name: rename tgz/zip files
-          run: |
-               mv pgplot-${{ env.VERSION }}.tgz pgplot-${{ env.VERSION }}-${{ env.RELEASE }}.tgz          
-               mv pgplot-${{ env.VERSION }}.zip pgplot-${{ env.VERSION }}-${{ env.RELEASE }}.zip
+          run: ./mockbuild.sh  build.tar ${{ env.VERSION }}
 
         - name: move rpms to main dir
           run: mv outputs/*.rpm .
@@ -115,7 +100,7 @@ jobs:
           env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           with:
-            file: "*.rpm;*.tgz;*.zip"
+            file: "*.rpm"
             draft: false
             update_latest_release: true
             tags: true
@@ -126,7 +111,7 @@ jobs:
           env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           with:
-            file: "*.rpm;*.tgz;*.zip"
+            file: "*.rpm"
             draft: false
             update_latest_release: false
             prerelease: true
