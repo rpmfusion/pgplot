@@ -68,7 +68,7 @@ fi
 cd $tmpdir
 
 #directory for dist
-tardir=$(basename "$tarfile" .tar) 
+tardir=${name}-${VERSION} 
 mkdir ${tardir}
 cd ${tardir}
 
@@ -95,9 +95,8 @@ do
     esac    
 done
 # like rpm %urlhelper to fetch source tar file
-curl --silent --show-error --fail --globoff --location -o $REMOTESRC $REMOTEURL chmod a+rx . 
-
-
+curl --silent --show-error --fail --globoff --location -o $REMOTESRC $REMOTEURL
+chmod a+rx *
 ls -l .
 
 cd ..
