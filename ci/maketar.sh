@@ -53,6 +53,11 @@ fi
 
 echo "Version $VERSION Release $RELEASE Date $RELDATE"
 
+REMOTEURL=$(awk '/^Source0:/{print $2}' $basedir/${name}.spec)
+REMOTESRC=$(basename $REMOTEURL)
+
+
+
 tmpdir=$(mktemp -p "/tmp" -d "${name}DIST_XXXXXXXX")
 echo "tmpdir $tmpdir"
 if test ! -e "$tmpdir" ;
@@ -89,6 +94,10 @@ do
             ;;
     esac    
 done
+# like rpm %urlhelper to fetch source tar file
+curl --silent --show-error --fail --globoff --location -o $REMOTESRC $REMOTEURL  
+
+
 ls -l .
 
 cd ..
