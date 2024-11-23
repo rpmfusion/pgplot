@@ -68,9 +68,10 @@ fi
 cd $tmpdir
 
 #directory for dist
-tardir=${name}-${VERSION} 
-mkdir ${tardir}
-cd ${tardir}
+tardir=${name}-${VERSION}
+tardir=.
+#mkdir ${tardir}
+#cd ${tardir}
 
 #populate with symbolic links from main code directory
 
@@ -99,7 +100,7 @@ curl --silent --show-error --fail --globoff --location -o $REMOTESRC $REMOTEURL
 chmod a+rx *
 ls -l .
 
-cd ..
+#cd ..
 
 
 #make the tar archive, rereferencing symbolic links

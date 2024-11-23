@@ -27,9 +27,6 @@ BREL="${RELEASE}.alma%{?dist}"
 sed "/^Release:/c\
 Release:        ${BREL}" <${NAME}.spec.base >${NAME}.spec
 
-tar xvf ${TARFILE}
-SOURCES=${NAME}-${VERSION}
-
 config='alma+epel-8-x86_64'
 mock -v -r $config  \
      --additional-package=libpng-devel \
