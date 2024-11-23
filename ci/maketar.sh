@@ -78,7 +78,7 @@ for f in $basedir/* ;
 do
     fn=$(basename $f)
     case "$fn" in
-        ${name}.spec | ci)
+        ${name}.spec | ci | work)
             continue
             ;;
         *)

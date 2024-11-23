@@ -17,15 +17,16 @@ dnf install -y mock
 echo "VERSION = ${VERSION}"
 echo "RELEASE = ${RELEASE}"
 
-tar xavf ${TARFILE}
+tar xzvf ${TARFILE}
 SOURCES=pgplot
+ls -lR
 if test ! -e ${SOURCES}/pgplot.pc
 then
     echo "ERROR: tarfile didn't expand to ${SOURCES} directory"
     exit 1
 fi
 mkdir outputs
-ls -l
+
 cp ${NAME}.spec ${NAME}.spec.base
 
 
