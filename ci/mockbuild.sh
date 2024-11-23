@@ -28,7 +28,7 @@ sed "/^Release:/c\
 Release:        ${BREL}" <${NAME}.spec.base >${NAME}.spec
 
 config='alma+epel-8-x86_64'
-mock -v -r $config  \
+mock -v --trace -r $config  \
      --additional-package=libpng-devel \
      --additional-package=tk-devel \
      --additional-package=libX11-devel \
@@ -40,6 +40,8 @@ mock -v -r $config  \
      --sources=${TARFILE} \
      --resultdir=./outputs -N
 
+mock -v -r $config --shell -- ls -lR /builddir/build
+exit 0
 cp ${NAME}.spec.base ${NAME}.spec
 config='fedora-40-x86_64'
 mock -v -r $config \
