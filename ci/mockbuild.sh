@@ -5,7 +5,7 @@ TARFILE=$1
 NAME=pgplot
 if test "x${TARFILE}" = "x" ;
 then
-    TARFILE=${NAME}.tar
+    TARFILE=${NAME}.tgz
 fi
 echo "tarfile: ${TARFILE}"
 VERSION=$(grep '^Version: ' ${NAME}.spec | cut -d ':' -f2 | awk -F'%' '{print $1}' | tr -d ' ')
@@ -40,7 +40,7 @@ mock -v -r $config  \
      --additional-package=glibc-common \
      --additional-package=openssl \
      --spec=${NAME}.spec \
-     --sources=${SOURCES} \
+     --sources=${TARFILE} \
      --resultdir=./outputs -N
 
 cp ${NAME}.spec.base ${NAME}.spec
@@ -54,7 +54,7 @@ mock -v -r $config \
      --additional-package=glibc-common \
      --additional-package=openssl \
      --spec=${NAME}.spec \
-     --sources=${SOURCES} \
+     --sources=${TARFILE} \
      --resultdir=./outputs -N
 
 ls -lR .

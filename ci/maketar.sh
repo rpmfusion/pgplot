@@ -1,5 +1,5 @@
 #!/bin/sh
-# collect up all the "base" files into a tar file
+# collect up all the "base" files into a tst file
 # that is used to build an rpm
 
 # usage: maketar.sh tarfile [version] [release] [releasedate]
@@ -18,12 +18,12 @@ echo "ls -l \$startdir"
 ls -l $startdir
 
 
-tarfile=$1
-if test "x$tarfile" = "x" ;
+tgzfile=$1
+if test "x$tgzfile" = "x" ;
 then
-    tarfile=${name}.tar
+    tgzfile=${name}.tgz
 fi
-echo "tarfile: $tarfile"
+echo "tgzfile: $tgzfile"
 
 VERSION=$2
 CVER=$(awk '/^Version/ {print $2}' $basedir/${name}.spec)
@@ -103,8 +103,8 @@ cd ..
 
 
 #make the tar archive, rereferencing symbolic links
-tar chf ${tarfile} --exclude-backups ${tardir}
-mv ${tarfile} $distdir
+tar chzf ${tgzfile} --exclude-backups ${tardir}
+mv ${tgzfile} $distdir
 ls -l $distdir
 
 cd $startdir

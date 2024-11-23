@@ -34,7 +34,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Build tar
-        run: ci/maketar.sh build.tar ${{ env.VERSION }} ${{ env.RELEASE }} ${{ env.RELDATE }} 
+        run: ci/maketar.sh pgplot.tgz ${{ env.VERSION }} ${{ env.RELEASE }} ${{ env.RELDATE }} 
 
       - name: Upload mock script
         uses: actions/upload-artifact@v4
@@ -45,8 +45,8 @@ jobs:
       - name: Upload tar
         uses: actions/upload-artifact@v4
         with:
-          name: build.tar
-          path: ci/build.tar
+          name: pgplot.tgz
+          path: ci/pgplot.tgz
 
       - name: upload spec file
         uses: actions/upload-artifact@v4
@@ -78,7 +78,7 @@ jobs:
         - name: Download tar
           uses: actions/download-artifact@v4
           with:
-            name: build.tar
+            name: pgplot.tgz
 
         - name: Download spec file
           uses: actions/download-artifact@v4
@@ -89,7 +89,7 @@ jobs:
           run: chmod +x mockbuild.sh
 
         - name: Run rpm build script
-          run: ./mockbuild.sh  build.tar ${{ env.VERSION }}
+          run: ./mockbuild.sh  pgplot.tgz ${{ env.VERSION }}
 
         - name: move rpms to main dir
           run: mv outputs/*.rpm .
