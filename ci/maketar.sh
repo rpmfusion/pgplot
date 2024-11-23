@@ -70,7 +70,7 @@ cd $tmpdir
 #directory for dist
 tardir=${name}
 mkdir ${tardir}
-pushd ${tardir}
+cd ${tardir}
 
 #populate with symbolic links from main code directory
 
@@ -92,7 +92,7 @@ curl --silent --show-error --fail --globoff --location -o $REMOTESRC $REMOTEURL
 chmod a+rx *
 ls -l .
 
-popd
+cd ..
 
 
 #make the tar archive, rereferencing symbolic links
