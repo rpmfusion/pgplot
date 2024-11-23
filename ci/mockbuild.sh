@@ -18,9 +18,12 @@ echo "VERSION = ${VERSION}"
 echo "RELEASE = ${RELEASE}"
 
 tar xavf ${TARFILE}
-# in case tarfile uses a different main directory:
-pkgf=$(find . -name pgplot.pc)
-SOURCES=$(dirname $x)
+SOURCES=pgplot
+if test ! -e ${SOURCES}/pgplot.pc
+then
+    echo "ERROR: tarfile didn't expand to ${SOURCES} directory"
+    exit 1
+fi
 mkdir outputs
 ls -l
 cp ${NAME}.spec ${NAME}.spec.base

@@ -7,3 +7,6 @@
 *.tgz
 *.zip
 *.tar
+
+# work directory should be ignored
+work/*
