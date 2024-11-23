@@ -16,9 +16,15 @@ dnf install -y mock
 
 echo "VERSION = ${VERSION}"
 echo "RELEASE = ${RELEASE}"
+
+tar xavf ${TARFILE}
+# in case tarfile uses a different main directory:
+pkgf=$(find . -name pgplot.pc)
+SOURCES=$(dirname $x)
 mkdir outputs
 ls -l
 cp ${NAME}.spec ${NAME}.spec.base
+
 
 # want to use the plain-vanilla pgplot.spec so that
 # it's the one that is included in the srpm
@@ -28,7 +34,7 @@ sed "/^Release:/c\
 Release:        ${BREL}" <${NAME}.spec.base >${NAME}.spec
 
 config='alma+epel-8-x86_64'
-mock -v --trace -r $config  \
+mock -v -r $config  \
      --additional-package=libpng-devel \
      --additional-package=tk-devel \
      --additional-package=libX11-devel \
@@ -37,11 +43,9 @@ mock -v --trace -r $config  \
      --additional-package=glibc-common \
      --additional-package=openssl \
      --spec=${NAME}.spec \
-     --sources=${TARFILE} \
+     --sources=${SOURCES} \
      --resultdir=./outputs -N
 
-mock -v -r $config --shell -- ls -lR /builddir/build
-exit 0
 cp ${NAME}.spec.base ${NAME}.spec
 config='fedora-40-x86_64'
 mock -v -r $config \
@@ -53,7 +57,7 @@ mock -v -r $config \
      --additional-package=glibc-common \
      --additional-package=openssl \
      --spec=${NAME}.spec \
-     --sources=${TARFILE} \
+     --sources=${SOURCES} \
      --resultdir=./outputs -N
 
 ls -lR .

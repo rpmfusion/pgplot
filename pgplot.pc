@@ -6,5 +6,8 @@ includedir=/usr/include
 Name: pgplot
 Description: Graphic library for making simple scientific graphs
 Version: @VERSION@
+Copyright: California Institute of Technology
+License: No fee for education, academic research and non-commercial purposes
+URL: http://www.astro.caltech.edu/~tjp/pgplot 
 Libs: -L${libdir} -lpgplot -lgfortran -lm -lX11
 #Cflags: -I${includedir}

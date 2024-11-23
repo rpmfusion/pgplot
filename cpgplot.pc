@@ -7,5 +7,8 @@ Name: cpgplot
 Description: C interface of pgplot
 Version: @VERSION@
 Requires: pgplot
+Copyright: California Institute of Technology
+License: No fee for education, academic research and non-commercial purposes
+URL: http://www.astro.caltech.edu/~tjp/pgplot 
 Libs: -L${libdir} -lcpgplot 
 Cflags: -I${includedir}

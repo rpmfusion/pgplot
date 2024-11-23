@@ -6,5 +6,8 @@ includedir=/usr/include
 Name: tk-pgplot
 Description: Tcl/Tk driver for pgplot
 Version: @VERSION@
+Copyright: California Institute of Technology
+License: No fee for education, academic research and non-commercial purposes
+URL: http://www.astro.caltech.edu/~tjp/pgplot 
 Libs: -L${libdir} -lpgplot -lgfortran -lm -lX11 -lpng
 Cflags: -I${includedir}

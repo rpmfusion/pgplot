@@ -1,0 +1,29 @@
+diff -up ./pgplot/drivers/pndriv.c.orig ./pgplot/drivers/pndriv.c
+--- ./pgplot/drivers/pndriv.c.orig	2014-11-01 21:31:44.000000000 -0400
++++ ./pgplot/drivers/pndriv.c	2014-11-01 21:47:49.000000000 -0400
+@@ -33,6 +33,7 @@
+ #include <stdio.h>
+ #include <string.h>
+ #include <math.h>
++#include <setjmp.h>
+ #include <png.h>
+ 
+ #ifdef VMS
+@@ -222,6 +223,8 @@ static void write_image_file(DeviceData
+ 	return;
+   }
+ 
++#ifdef PNG_SETJMP_SUPPORTED
++#ifdef DOITANYWAY
+   if (setjmp(png_ptr->jmpbuf)) { /* not really sure what I'm doing here... */
+ 	fprintf(stderr,"%s: error in libpng while writing file %s, plotting disabled\n", png_ident, filename);
+ 	png_destroy_write_struct(&png_ptr,&info_ptr);
+@@ -231,6 +234,8 @@ static void write_image_file(DeviceData
+ 	free(filename);
+ 	return;
+   }
++#endif
++#endif
+ 
+   png_init_io(png_ptr, fp);
+ 

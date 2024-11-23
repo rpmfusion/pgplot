@@ -95,13 +95,17 @@ the %{name} Tcl/Tk driver.
 
 %prep
 # if distributed without source, fetch source 
-if test ! -e %{SOURCE0} ; then %{_urlhelper} %{SOURCE0} %{SOURCEURL0} ; fi
-
+if test -e %{SOURCE0}
+then
+echo "have main source file locally"
+else
+%{_urlhelper} %{SOURCE0} %{SOURCEURL0}
 # check source digest
 openssl dgst -sha512 %{SOURCE0} | cut -d= -f2 >sources.rem
 cut -d= -f2 %{SOURCE5} >sources.ref
 if ! diff -q sources.rem sources.ref ; then echo "bad source checksum"; exit 9 ; fi
 rm sources.rem sources.ref
+fi
 
 %setup -q -n %{name}
 
@@ -135,10 +139,12 @@ rm sources.rem sources.ref
 %endif
 
 # Creating pkgconfig files from templates
-%{__sed} -e 's|archlibdir|%{_libdir}|g' -i pgplot.pc
-%{__sed} -e 's|archlibdir|%{_libdir}|g' -i cpgplot.pc
-%{__sed} -e 's|archlibdir|%{_libdir}|g' -i tk-pgplot.pc
-%{__sed} -e 's|archlibdir|%{_libdir}|g' -i pkgIndex.tcl
+for pkgf in $(find . -name "*.pc") pkgIndex.tcl
+do
+%{__sed} -e 's|archlibdir|%{_libdir}|g' -i $pkgf
+%{__sed} -e 's|@VERSION@|%{version}|g'  -i $pkgf
+%{__sed} -e 's|@RELEASE@|%{release}|g'  -i $pkgf
+done
 
 # Version files stored in one Changelog
 (for i in $(find . -name "ver*.txt" |sort -r); do iconv -f "ISO-8859-1" -t "utf8" $i; done) > ChangeLog

@@ -1,5 +1,5 @@
 #!/bin/sh
-# collect up all the "base" files into a tst file
+# collect up all the "base" files into a tar file
 # that is used to build an rpm
 
 # usage: maketar.sh tarfile [version] [release] [releasedate]
@@ -68,10 +68,9 @@ fi
 cd $tmpdir
 
 #directory for dist
-tardir=${name}-${VERSION}
-tardir=.
-#mkdir ${tardir}
-#cd ${tardir}
+tardir=${name}
+mkdir ${tardir}
+pushd ${tardir}
 
 #populate with symbolic links from main code directory
 
@@ -79,13 +78,6 @@ for f in $basedir/* ;
 do
     fn=$(basename $f)
     case "$fn" in
-        *.pc)
-            cp $f ./$fn
-            sed -i "s/@VERSION@/${VERSION}/" $fn
-            sed -i "s/@RELEASE@/${RELEASE}/" $fn
-            sed -i "s/@RELDATE@/${RELDATE}/" $fn
-            echo "edit $fn"
-            ;;
         ${name}.spec | ci)
             continue
             ;;
@@ -100,7 +92,7 @@ curl --silent --show-error --fail --globoff --location -o $REMOTESRC $REMOTEURL
 chmod a+rx *
 ls -l .
 
-#cd ..
+popd
 
 
 #make the tar archive, rereferencing symbolic links
