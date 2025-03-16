@@ -34,7 +34,7 @@ Patch5: pgplot5.2-formaterror.patch
 Patch6: pgplot5.2-tcl86.patch
 Patch7: gcc14_buildfix.patch
 
-BuildRequires: tk-devel
+BuildRequires: tk8-devel
 BuildRequires: libX11-devel
 BuildRequires: gcc-gfortran
 BuildRequires: perl
@@ -80,7 +80,7 @@ Tcl/Tk driver for %{name}
 Summary: Tcl/Tk driver for %{name} devel files 
 Requires: tcl-%{name}%{?_isa} = %{version}-%{release}
 Requires: %{name}-devel%{?_isa} = %{version}-%{release}
-Requires: tk-devel
+Requires: tk8-devel
 Provides: tk-%{name}-devel = %{version}-%{release}
 
 %description -n tcl-%{name}-devel
@@ -91,7 +91,7 @@ the %{name} Tcl/Tk driver.
 Summary: MOTIF driver for %{name}
 Group: Development/Libraries
 Requires: %{name} = %{version}-%{release}
-#Requires: tcl(abi) = 8.5
+Requires: tcl(abi) = 8.6
 Provides: motif-%{name} = %{version}-%{release}
 
 %description -n motif-%{name}
@@ -150,7 +150,7 @@ cp %{SOURCE6} .
 %build
 ./makemake . linux g77_gcc
 # Parallel make not supported
-%{__make} FC="f95" CC="%{__cc}" CFLAGS="%{optflags}" FFLAGS="%{optflags} -std=legacy" \
+%{__make} FC="f95" CC="%{__cc}" CFLAGS="%{optflags} -std=gnu17" FFLAGS="%{optflags} -std=legacy" \
    NLIBS="-lgfortran -lm -lX11 -lz"
 
 # Creating dynamic library for C
